@@ -7,8 +7,8 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 | Podfaza | Period      | Opis                                                         | Status         |
 |---------|-------------|--------------------------------------------------------------|----------------|
 | 0.1     | Nedelja 1   | Repo setup + dokumentacioni temelj                           | Završeno       |
-| 0.2     | Nedelja 1-2 | Lokalno razvojno okruženje: Node.js, PostgreSQL, Docker      | Planirano      |
-| 0.3     | Nedelja 3-4 | ASP.NET Core 9 backend scaffold sa modulima                  | Planirano      |
+| 0.2     | Nedelja 1-2 | Lokalno razvojno okruženje: Node.js, PostgreSQL, Docker      | Završeno       |
+| 0.3     | Nedelja 3-4 | ASP.NET Core 10 backend scaffold sa modulima                 | Planirano      |
 | 0.4     | Nedelja 5-6 | PostgreSQL + EF Core + multi-tenant temelj                   | Planirano      |
 | 0.5     | Nedelja 7-8 | JWT autentikacija (registracija + login + refresh)           | Planirano      |
 | 0.6     | Nedelja 9   | Next.js 15 web scaffold                                      | Planirano      |

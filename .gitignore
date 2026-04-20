@@ -84,3 +84,6 @@ pnpm-debug.log*
 *.key
 *.crt
 *.cer
+
+# Claude Code local settings
+.claude/settings.local.json
