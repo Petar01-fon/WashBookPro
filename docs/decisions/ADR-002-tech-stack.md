@@ -18,7 +18,7 @@ Usvajamo sledeći stek:
 
 | Sloj           | Tehnologija                                   |
 |----------------|-----------------------------------------------|
-| Backend API    | ASP.NET Core 9 (C#) sa Entity Framework Core  |
+| Backend API    | ASP.NET Core 10 (C#) sa Entity Framework Core |
 | Baza podataka  | PostgreSQL 16                                 |
 | Web frontend   | Next.js 15 (React, TypeScript, Tailwind, shadcn/ui) |
 | Mobilna app    | React Native + Expo (TypeScript)              |
@@ -60,7 +60,7 @@ je dovoljan i lako se razume i debuguje.
 - Developer mora da ojača znanje iz Next.js, React Native i EF Core — to su
   oblasti sa ograničenim prethodnim iskustvom.
 - Multi-language monorepo zahteva više alata lokalno instaliranih: Node.js,
-  .NET SDK 9, Python i Docker.
+  .NET SDK 10, Python i Docker.
 - CI/CD pipeline mora da pokrije tri tipa aplikacija (.NET, Node, Python) sa
   različitim build procesima.
 - Sve tri aplikacije dele PostgreSQL instancu u Fazi 0, ali su dizajnirane
