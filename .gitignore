@@ -1,0 +1,86 @@
+# === Node / React / Next.js ==========================================
+
+node_modules/
+**/node_modules/
+
+build/
+dist/
+.next/
+out/
+.expo/
+coverage/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# === .NET / C# =======================================================
+
+bin/
+obj/
+*.user
+*.suo
+*.cache
+[Pp]ublish/
+[Ll]ogs/
+.vs/
+*.rsuser
+
+# === Python (ANPR edge) ==============================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# === Docker ===========================================================
+
+*.dockerignore.bak
+
+# === OS / Editor ======================================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === Logs =============================================================
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# === Backup / temp files ==============================================
+
+*.bak
+*.orig
+*.rej
+*.tmp
+
+# === Environment variables — NEVER commit real secrets ===============
+
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# === Certificates and keys — NEVER commit ============================
+
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
