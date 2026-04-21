@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using WashBookPro.Api.Modules.Auth.Entities;
 using WashBookPro.Api.Modules.Tenants.Entities;
 
 namespace WashBookPro.Api.Common.Persistence;
@@ -15,6 +16,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +39,16 @@ public class AppDbContext : DbContext
             b.Property(t => t.Name).IsRequired().HasMaxLength(200);
             b.Property(t => t.Slug).IsRequired().HasMaxLength(100);
             b.HasIndex(t => t.Slug).IsUnique();
+        });
+
+        modelBuilder.Entity<User>(b =>
+        {
+            b.HasKey(u => u.Id);
+            b.Property(u => u.Email).IsRequired().HasMaxLength(256);
+            b.Property(u => u.PasswordHash).IsRequired();
+            b.Property(u => u.Role).IsRequired().HasMaxLength(50);
+            b.Property(u => u.RefreshToken).HasMaxLength(512);
+            b.HasIndex(u => new { u.TenantId, u.Email }).IsUnique();
         });
     }
 

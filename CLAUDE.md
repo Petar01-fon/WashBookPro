@@ -101,7 +101,7 @@ Variables are filled in per-phase as noted in `.env.example`.
 | 0.2   | Week 1-2    | Local dev environment: Node.js, PostgreSQL, Docker                          |
 | 0.3   | Week 3-4    | ASP.NET Core 10 backend scaffold with modules                               |
 | 0.4   | Week 5-6    | PostgreSQL + EF Core + multi-tenant foundation                              |
-| 0.5   | Week 7-8    | JWT authentication (register + login + refresh)                             |
+| 0.5   | Week 7-8    | JWT authentication (register + login + refresh) ✓                           |
 | 0.6   | Week 9      | Next.js 15 web scaffold                                                     |
 | 0.7   | Week 10     | React Native + Expo mobile scaffold                                         |
 | 0.8   | Week 11-12  | Docker Compose + CI/CD + deployment                                         |
