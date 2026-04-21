@@ -4,20 +4,21 @@
 
 Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipeline-a.
 
-| Podfaza | Period        | Opis                                                         | Status    |
-|---------|---------------|--------------------------------------------------------------|-----------|
-| 0.1     | Nedelja 1     | Repo setup + dokumentacioni temelj                           | Završeno  |
-| 0.2     | Nedelja 1-2   | Lokalno razvojno okruženje: Node.js, PostgreSQL, Docker      | Završeno  |
-| 0.3     | Nedelja 3-4   | ASP.NET Core 10 backend scaffold sa modulima                 | Završeno  |
-| 0.4     | Nedelja 5-6   | PostgreSQL + EF Core + multi-tenant temelj                   | Završeno  |
-| 0.5     | Nedelja 7-8   | JWT autentikacija (registracija + login + refresh)           | Završeno  |
-| 0.6     | Nedelja 9     | Next.js 15 web scaffold                                      | Planirano |
-| 0.7     | Nedelja 10    | React Native + Expo mobilni scaffold                         | Planirano |
-| 0.8     | Nedelja 11-12 | Docker Compose + CI/CD + deployment                          | Planirano |
+| Podfaza | Period        | Opis                                                    | Status    |
+| ------- | ------------- | ------------------------------------------------------- | --------- |
+| 0.1     | Nedelja 1     | Repo setup + dokumentacioni temelj                      | Završeno  |
+| 0.2     | Nedelja 1-2   | Lokalno razvojno okruženje: Node.js, PostgreSQL, Docker | Završeno  |
+| 0.3     | Nedelja 3-4   | ASP.NET Core 10 backend scaffold sa modulima            | Završeno  |
+| 0.4     | Nedelja 5-6   | PostgreSQL + EF Core + multi-tenant temelj              | Završeno  |
+| 0.5     | Nedelja 7-8   | JWT autentikacija (registracija + login + refresh)      | Završeno  |
+| 0.6     | Nedelja 9     | Next.js 16 web scaffold                                 | Završeno  |
+| 0.7     | Nedelja 10    | React Native + Expo mobilni scaffold                    | Planirano |
+| 0.8     | Nedelja 11-12 | Docker Compose + CI/CD + deployment                     | Planirano |
 
 ### Završene podfaze — detalji
 
 #### Faza 0.1 — Repo setup + dokumentacioni temelj
+
 - Inicijalna struktura repozitorijuma (`/backend`, `/web`, `/mobile`, `/anpr-edge`, `/docs`, `/infra`)
 - `README.md` na nivou projekta
 - `CLAUDE.md` — instrukcije za Claude Code
@@ -28,6 +29,7 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 - ADR-002: Tech stack odluka
 
 #### Faza 0.2 — Lokalno razvojno okruženje
+
 - Docker Compose konfiguracija (`infra/docker-compose.yml`)
   - PostgreSQL 16 servis
   - pgAdmin 4 servis sa unapred konfigurisanom konekcijom
@@ -35,6 +37,7 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 - Ispravka dokumentacije: .NET verzija 9 → 10 u svim fajlovima
 
 #### Faza 0.3 — ASP.NET Core 10 backend scaffold
+
 - Solution fajl `backend/WashBookPro.slnx`
 - Projekat `WashBookPro.Api` sa modularnom strukturom foldera:
   - `Modules/Auth`, `Modules/Tenants`, `Modules/Reservations`
@@ -46,6 +49,7 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 - ADR-003: Controller-based vs. Minimal API (odlučeno: Controller-based)
 
 #### Faza 0.4 — PostgreSQL + EF Core + multi-tenant temelj
+
 - NuGet paketi: `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.EntityFrameworkCore.Design`
 - `AppDbContext` sa automatskim `TenantId` filterom (`HasQueryFilter`)
 - `ITenantContext` interfejs i `HttpContextTenantContext` implementacija (čita `X-Tenant-Id` header)
@@ -56,6 +60,7 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 - ADR-004: EF Core multi-tenant pristup (globalni query filter po `TenantId`)
 
 #### Faza 0.5 — JWT autentikacija
+
 - NuGet paket: `BCrypt.Net-Next` za hashing lozinki
 - DTOs: `RegisterRequest`, `LoginRequest`, `AuthResponse`, `RefreshRequest`
 - `IAuthService` interfejs i `AuthService` implementacija:
@@ -67,6 +72,18 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 - `IgnoreQueryFilters()` na auth upitima zbog odsustva tenant konteksta pri loginu/registraciji
 - `appsettings.Development.json` — dodata `Jwt` sekcija sa PLACEHOLDER vrednostima
 - ADR-005: JWT autentikacija
+
+#### Faza 0.6 — Next.js 16 web scaffold
+
+- Next.js 16.2.x sa React 19, TypeScript, Tailwind CSS, shadcn/ui, App Router
+- `web/lib/api.ts` — centralni fetch wrapper sa error handlingom (`ApiError`)
+- `web/lib/auth.ts` — token management (localStorage), JWT decode, login/logout
+- `web/middleware.ts` — zaštita ruta, redirect na `/login` bez tokena
+- `app/(auth)/login` — login forma povezana sa `POST /auth/login` na backendu
+- `app/(dashboard)` — stub dashboard sa prikazom JWT claimova (userId, tenantId, role)
+- CORS konfiguracija u `Program.cs` za development (`DevPolicy`, `localhost:3000`)
+- `web/.env.local` — `NEXT_PUBLIC_API_URL` (gitignored)
+- ADR-006: Next.js 16 umesto 15, ADR-007: LTS strategija, ADR-008: jedan tenant po korisniku
 
 ---
 

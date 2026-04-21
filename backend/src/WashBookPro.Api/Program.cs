@@ -9,6 +9,16 @@ using WashBookPro.Api.Modules.Auth.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpContextTenantContext>();
 
@@ -52,6 +62,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("DevPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

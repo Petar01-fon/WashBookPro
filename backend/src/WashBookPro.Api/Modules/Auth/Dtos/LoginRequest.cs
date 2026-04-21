@@ -1,3 +1,3 @@
 namespace WashBookPro.Api.Modules.Auth.Dtos;
 
-public record LoginRequest(string Email, string Password, Guid TenantId);
+public record LoginRequest(string Email, string Password);

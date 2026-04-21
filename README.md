@@ -26,7 +26,7 @@ i B2B fakturisanje.
 |----------------|-------------------------------|
 | Backend API    | ASP.NET Core 9 (C#)           |
 | Baza podataka  | PostgreSQL                    |
-| Web frontend   | Next.js 15                    |
+| Web frontend   | Next.js 16                    |
 | Mobilna app    | React Native + Expo           |
 | ANPR edge      | Python (PlateRecognizer)      |
 | Infrastruktura | Docker Compose                |

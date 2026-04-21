@@ -2,6 +2,7 @@
 
 **Datum:** 2026-04-20
 **Status:** Prihvaćeno
+Delimično zamenjeno ADR-006 (Next.js verzija)
 
 ---
 
@@ -20,7 +21,7 @@ Usvajamo sledeći stek:
 |----------------|-----------------------------------------------|
 | Backend API    | ASP.NET Core 10 (C#) sa Entity Framework Core |
 | Baza podataka  | PostgreSQL 16                                 |
-| Web frontend   | Next.js 15 (React, TypeScript, Tailwind, shadcn/ui) |
+| Web frontend   | Next.js 16 (React 19, TypeScript, Tailwind, shadcn/ui) |
 | Mobilna app    | React Native + Expo (TypeScript)              |
 | ANPR           | Python (PlateRecognizer API, za Fazu 2)       |
 | Infrastruktura | Docker Compose + Hetzner VPS                  |

@@ -46,7 +46,7 @@ public class AuthService(AppDbContext db, IConfiguration config) : IAuthService
     {
         var user = await db.Users
             .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(u => u.TenantId == request.TenantId && u.Email == request.Email);
+            .SingleOrDefaultAsync(u => u.Email == request.Email);
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials.");

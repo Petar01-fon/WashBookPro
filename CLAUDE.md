@@ -28,7 +28,7 @@ monitoring, payments, customer notifications, and B2B invoicing.
 |---------------|-----------------------------------|
 | Backend API   | ASP.NET Core 10 (C#)              |
 | Database      | PostgreSQL                        |
-| Frontend web  | Next.js 15 (React)                |
+| Frontend web  | Next.js 16 (React 19)             |
 | Mobile app    | React Native + Expo               |
 | ANPR edge     | Python (PlateRecognizer API)      |
 | Infrastructure| Docker Compose                    |
@@ -51,7 +51,7 @@ monitoring, payments, customer notifications, and B2B invoicing.
 
 ```
 /backend        ASP.NET Core 10 API        (initialized Faza 0.3)
-/web            Next.js 15 web app         (initialized Faza 0.6)
+/web            Next.js 16 web app         (initialized Faza 0.6)
 /mobile         React Native + Expo        (initialized Faza 0.7)
 /anpr-edge      Python ANPR service        (initialized Faza 2)
 /docs
@@ -102,7 +102,7 @@ Variables are filled in per-phase as noted in `.env.example`.
 | 0.3   | Week 3-4    | ASP.NET Core 10 backend scaffold with modules                               |
 | 0.4   | Week 5-6    | PostgreSQL + EF Core + multi-tenant foundation                              |
 | 0.5   | Week 7-8    | JWT authentication (register + login + refresh) ✓                           |
-| 0.6   | Week 9      | Next.js 15 web scaffold                                                     |
+| 0.6   | Week 9      | Next.js 16 web scaffold                                                     |
 | 0.7   | Week 10     | React Native + Expo mobile scaffold                                         |
 | 0.8   | Week 11-12  | Docker Compose + CI/CD + deployment                                         |
 | 1     | Month 3-5   | MVP for owner's wash: reservations, worker terminal, owner dashboard        |
