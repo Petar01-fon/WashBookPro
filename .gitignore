@@ -75,6 +75,7 @@ pnpm-debug.log*
 .env.test.local
 .env.production.local
 .env.*.local
+infra/.env
 
 # === Certificates and keys — NEVER commit ============================
 

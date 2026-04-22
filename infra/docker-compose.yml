@@ -1,15 +1,51 @@
+# services:
+#   postgres:
+#     image: postgres:16
+#     restart: unless-stopped
+#     env_file: .env
+#     ports:
+#       - "${POSTGRES_PORT:-5432}:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+
+#   pgadmin:
+#     image: dpage/pgadmin4:latest
+#     restart: unless-stopped
+#     env_file: .env
+#     ports:
+#       - "${PGADMIN_PORT:-5050}:80"
+#     volumes:
+#       - pgadmin_data:/var/lib/pgadmin
+#       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+#     depends_on:
+#       - postgres
+
+# volumes:
+#   postgres_data:
+#   pgadmin_data:
+
+
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
+    container_name: washbook-postgres
     restart: unless-stopped
     env_file: .env
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - washbook-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4:latest
+    container_name: washbook-pgadmin
     restart: unless-stopped
     env_file: .env
     ports:
@@ -17,9 +53,52 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - washbook-net
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: washbook-backend
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__Default: ${CONNECTION_STRING}
+      Jwt__Secret: ${JWT_SECRET}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE}
+      Jwt__ExpirationMinutes: ${JWT_EXPIRATION_MINUTES}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    networks:
+      - washbook-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: washbook-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    networks:
+      - washbook-net
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
   pgadmin_data:
+
+networks:
+  washbook-net:
+    driver: bridge

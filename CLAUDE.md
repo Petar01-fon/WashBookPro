@@ -24,26 +24,26 @@ monitoring, payments, customer notifications, and B2B invoicing.
 
 ## Technology Stack
 
-| Layer         | Technology                        |
-|---------------|-----------------------------------|
-| Backend API   | ASP.NET Core 10 (C#)              |
-| Database      | PostgreSQL                        |
-| Frontend web  | Next.js 16 (React 19)             |
-| Mobile app    | React Native + Expo               |
-| ANPR edge     | Python (PlateRecognizer API)      |
-| Infrastructure| Docker Compose                    |
+| Layer          | Technology                   |
+| -------------- | ---------------------------- |
+| Backend API    | ASP.NET Core 10 (C#)         |
+| Database       | PostgreSQL                   |
+| Frontend web   | Next.js 16 (React 19)        |
+| Mobile app     | React Native + Expo          |
+| ANPR edge      | Python (PlateRecognizer API) |
+| Infrastructure | Docker Compose               |
 
 ---
 
 ## External Services
 
-| Purpose         | Service                  | Notes                              |
-|-----------------|--------------------------|------------------------------------|
-| SMS / Viber     | Infobip                  | NOT Twilio                         |
-| Payments        | AllSecure or Monri       | NOT Stripe (B2C market)            |
-| ANPR            | PlateRecognizer          |                                    |
-| Email           | Resend                   | Transactional emails, added in Faza 2 |
-| Object storage  | MinIO (S3-compatible)    |                                    |
+| Purpose        | Service               | Notes                                 |
+| -------------- | --------------------- | ------------------------------------- |
+| SMS / Viber    | Infobip               | NOT Twilio                            |
+| Payments       | AllSecure or Monri    | NOT Stripe (B2C market)               |
+| ANPR           | PlateRecognizer       |                                       |
+| Email          | Resend                | Transactional emails, added in Faza 2 |
+| Object storage | MinIO (S3-compatible) |                                       |
 
 ---
 
@@ -95,17 +95,17 @@ Variables are filled in per-phase as noted in `.env.example`.
 
 ## Roadmap Phases (high level)
 
-| Phase | Period      | Description                                                                 |
-|-------|-------------|-----------------------------------------------------------------------------|
-| 0.1   | Week 1      | Repo setup + documentation foundation (this phase)                          |
-| 0.2   | Week 1-2    | Local dev environment: Node.js, PostgreSQL, Docker                          |
-| 0.3   | Week 3-4    | ASP.NET Core 10 backend scaffold with modules                               |
-| 0.4   | Week 5-6    | PostgreSQL + EF Core + multi-tenant foundation                              |
-| 0.5   | Week 7-8    | JWT authentication (register + login + refresh) ✓                           |
-| 0.6   | Week 9      | Next.js 16 web scaffold                                                     |
-| 0.7   | Week 10     | React Native + Expo mobile scaffold                                         |
-| 0.8   | Week 11-12  | Docker Compose + CI/CD + deployment                                         |
-| 1     | Month 3-5   | MVP for owner's wash: reservations, worker terminal, owner dashboard        |
-| 2     | Month 6-8   | ANPR anti-theft, B2B portal, notifications, mobile full-featured            |
-| 3     | Month 9-11  | SaaS readiness: self-service onboarding, online payments, eFaktura, subscription billing |
-| 4     | Month 12+   | Growth, optimization, advanced features                                     |
+| Phase | Period     | Description                                                                              |
+| ----- | ---------- | ---------------------------------------------------------------------------------------- |
+| 0.1   | Week 1     | Repo setup + documentation foundation (this phase) ✓                                     |
+| 0.2   | Week 1-2   | Local dev environment: Node.js, PostgreSQL, Docker ✓                                     |
+| 0.3   | Week 3-4   | ASP.NET Core 10 backend scaffold with modules ✓                                          |
+| 0.4   | Week 5-6   | PostgreSQL + EF Core + multi-tenant foundation ✓                                         |
+| 0.5   | Week 7-8   | JWT authentication (register + login + refresh) ✓                                        |
+| 0.6   | Week 9     | Next.js 16 web scaffold ✓                                                                |
+| 0.7   | Week 10    | React Native + Expo mobile scaffold ✓                                                    |
+| 0.8   | Week 11-12 | Docker Compose + CI/CD + deployment ✓                                                    |
+| 1     | Month 3-5  | MVP for owner's wash: reservations, worker terminal, owner dashboard                     |
+| 2     | Month 6-8  | ANPR anti-theft, B2B portal, notifications, mobile full-featured                         |
+| 3     | Month 9-11 | SaaS readiness: self-service onboarding, online payments, eFaktura, subscription billing |
+| 4     | Month 12+  | Growth, optimization, advanced features                                                  |

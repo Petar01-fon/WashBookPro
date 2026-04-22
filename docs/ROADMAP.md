@@ -4,16 +4,16 @@
 
 Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipeline-a.
 
-| Podfaza | Period        | Opis                                                    | Status    |
-| ------- | ------------- | ------------------------------------------------------- | --------- |
-| 0.1     | Nedelja 1     | Repo setup + dokumentacioni temelj                      | Završeno  |
-| 0.2     | Nedelja 1-2   | Lokalno razvojno okruženje: Node.js, PostgreSQL, Docker | Završeno  |
-| 0.3     | Nedelja 3-4   | ASP.NET Core 10 backend scaffold sa modulima            | Završeno  |
-| 0.4     | Nedelja 5-6   | PostgreSQL + EF Core + multi-tenant temelj              | Završeno  |
-| 0.5     | Nedelja 7-8   | JWT autentikacija (registracija + login + refresh)      | Završeno  |
-| 0.6     | Nedelja 9     | Next.js 16 web scaffold                                 | Završeno  |
-| 0.7     | Nedelja 10    | React Native + Expo mobilni scaffold                    | Završeno  |
-| 0.8     | Nedelja 11-12 | Docker Compose + CI/CD + deployment                     | Planirano |
+| Podfaza | Period        | Opis                                                    | Status   |
+| ------- | ------------- | ------------------------------------------------------- | -------- |
+| 0.1     | Nedelja 1     | Repo setup + dokumentacioni temelj                      | Završeno |
+| 0.2     | Nedelja 1-2   | Lokalno razvojno okruženje: Node.js, PostgreSQL, Docker | Završeno |
+| 0.3     | Nedelja 3-4   | ASP.NET Core 10 backend scaffold sa modulima            | Završeno |
+| 0.4     | Nedelja 5-6   | PostgreSQL + EF Core + multi-tenant temelj              | Završeno |
+| 0.5     | Nedelja 7-8   | JWT autentikacija (registracija + login + refresh)      | Završeno |
+| 0.6     | Nedelja 9     | Next.js 16 web scaffold                                 | Završeno |
+| 0.7     | Nedelja 10    | React Native + Expo mobilni scaffold                    | Završeno |
+| 0.8     | Nedelja 11-12 | Docker Compose + CI/CD + deployment                     | Završeno |
 
 ### Završene podfaze — detalji
 
@@ -95,6 +95,17 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 - `app/dashboard.tsx` — stub dashboard sa prikazom JWT claimova (userId, email, tenantId, role)
 - `mobile/.env.local` — `EXPO_PUBLIC_API_URL` (gitignored)
 - ADR-011: Expo Router umesto React Navigation, ADR-012: expo-secure-store za JWT token storage
+
+#### Faza 0.8 — Docker Compose + CI/CD + deployment
+
+- `backend/Dockerfile` — multi-stage build (sdk → aspnet runtime), linux-x64
+- `backend/.dockerignore` — isključuje bin/, obj/, .vs/
+- `web/Dockerfile` — multi-stage build (node:20-alpine), standalone output
+- `web/.dockerignore` — isključuje node_modules, .next
+- `infra/docker-compose.yml` — prošireno sa backend i web servisima, healthcheck na postgres
+- `infra/.env` / `infra/.env.example` — prošireno sa backend i web varijablama
+- `.github/workflows/ci.yml` — paralelni jobovi: .NET build+test i Next.js build
+- ADR-013: Docker Compose strategija
 
 ---
 

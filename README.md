@@ -22,14 +22,14 @@ i B2B fakturisanje.
 
 ## Tehnološki stek
 
-| Sloj           | Tehnologija                   |
-|----------------|-------------------------------|
-| Backend API    | ASP.NET Core 9 (C#)           |
-| Baza podataka  | PostgreSQL                    |
-| Web frontend   | Next.js 16                    |
-| Mobilna app    | React Native + Expo           |
-| ANPR edge      | Python (PlateRecognizer)      |
-| Infrastruktura | Docker Compose                |
+| Sloj           | Tehnologija              |
+| -------------- | ------------------------ |
+| Backend API    | ASP.NET Core 9 (C#)      |
+| Baza podataka  | PostgreSQL               |
+| Web frontend   | Next.js 16               |
+| Mobilna app    | React Native + Expo      |
+| ANPR edge      | Python (PlateRecognizer) |
+| Infrastruktura | Docker Compose           |
 
 ## Struktura repozitorijuma
 
@@ -44,7 +44,48 @@ i B2B fakturisanje.
 
 ## Pokretanje projekta
 
-Dokumentacija za pokretanje biće dodata po završetku Faze 0.8.
+### Preduslovi
+
+- Docker Desktop
+- Node.js 20+ i pnpm
+- .NET SDK 10
+
+### Pokretanje celog stack-a (Docker)
+
+```bash
+cd infra
+cp .env.example .env   # popuni vrednosti
+docker compose up -d
+```
+
+Servisi:
+
+- Web aplikacija: http://localhost:3000
+- Backend API: http://localhost:8080/scalar/v1
+- pgAdmin: http://localhost:5050
+
+### Pokretanje za razvoj (nativno)
+
+Backend:
+
+```bash
+cd backend/src/WashBookPro.Api
+dotnet run --launch-profile http
+```
+
+Web:
+
+```bash
+cd web
+pnpm dev
+```
+
+Mobile:
+
+```bash
+cd mobile
+npx expo start
+```
 
 ## Arhitekturne odluke
 
