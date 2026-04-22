@@ -12,7 +12,7 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 | 0.4     | Nedelja 5-6   | PostgreSQL + EF Core + multi-tenant temelj              | Završeno  |
 | 0.5     | Nedelja 7-8   | JWT autentikacija (registracija + login + refresh)      | Završeno  |
 | 0.6     | Nedelja 9     | Next.js 16 web scaffold                                 | Završeno  |
-| 0.7     | Nedelja 10    | React Native + Expo mobilni scaffold                    | Planirano |
+| 0.7     | Nedelja 10    | React Native + Expo mobilni scaffold                    | Završeno  |
 | 0.8     | Nedelja 11-12 | Docker Compose + CI/CD + deployment                     | Planirano |
 
 ### Završene podfaze — detalji
@@ -84,6 +84,17 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 - CORS konfiguracija u `Program.cs` za development (`DevPolicy`, `localhost:3000`)
 - `web/.env.local` — `NEXT_PUBLIC_API_URL` (gitignored)
 - ADR-006: Next.js 16 umesto 15, ADR-007: LTS strategija, ADR-008: jedan tenant po korisniku
+
+#### Faza 0.7 — React Native + Expo mobilni scaffold
+
+- Expo SDK sa Expo Router (file-based routing), TypeScript
+- `mobile/lib/api.ts` — centralni fetch wrapper sa error handlingom (`ApiError`)
+- `mobile/lib/auth.ts` — token management (expo-secure-store), JWT decode, login/logout
+- `app/index.tsx` — entry point, redirect na `/login` ili `/dashboard` na osnovu tokena
+- `app/login.tsx` — login forma povezana sa `POST /auth/login` na backendu
+- `app/dashboard.tsx` — stub dashboard sa prikazom JWT claimova (userId, email, tenantId, role)
+- `mobile/.env.local` — `EXPO_PUBLIC_API_URL` (gitignored)
+- ADR-011: Expo Router umesto React Navigation, ADR-012: expo-secure-store za JWT token storage
 
 ---
 
