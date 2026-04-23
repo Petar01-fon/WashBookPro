@@ -68,4 +68,12 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var devTenantId = Guid.Parse(config["DevTenantId"]!);
+    await ReservationSeed.SeedAsync(db, devTenantId);
+}
+
 app.Run();

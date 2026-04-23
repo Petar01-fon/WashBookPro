@@ -17,6 +17,10 @@ public class AppDbContext : DbContext
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Bay> Bays => Set<Bay>();
+    public DbSet<Service> Services => Set<Service>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Reservation> Reservations => Set<Reservation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,6 +54,8 @@ public class AppDbContext : DbContext
             b.Property(u => u.RefreshToken).HasMaxLength(512);
             b.HasIndex(u => new { u.TenantId, u.Email }).IsUnique();
         });
+
+        modelBuilder.Entity<Reservation>().HasIndex(r => new { r.BayId, r.StartsAt });
     }
 
     private void ApplyTenantFilter<T>(ModelBuilder modelBuilder) where T : class, ITenantScoped
