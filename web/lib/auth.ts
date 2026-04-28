@@ -30,7 +30,7 @@ export function clearTokens(): void {
 type JwtPayload = {
   sub: string;
   tenant_id: string;
-  role: string;
+  "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": string;
   exp: number;
 };
 
@@ -60,6 +60,7 @@ type LoginResponse = {
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
+  tenantSlug: string;
 };
 
 export async function login(credentials: LoginRequest): Promise<void> {
@@ -68,6 +69,7 @@ export async function login(credentials: LoginRequest): Promise<void> {
     body: credentials,
   });
   saveTokens(data.accessToken, data.refreshToken);
+  if (data.tenantSlug) saveTenantSlug(data.tenantSlug);
 }
 
 export function logout(): void {
@@ -75,5 +77,22 @@ export function logout(): void {
   document.cookie = "washbook_authed=; path=/; max-age=0";
 }
 
+// ── Helpers ───────────────────────────────────────────────────
+
+export function getRole(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  const payload = decodeToken(token);
+  return (payload as any)?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ?? null;
+}
+
+export function getTenantSlug(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("washbook_tenant_slug");
+}
+
+export function saveTenantSlug(slug: string): void {
+  localStorage.setItem("washbook_tenant_slug", slug);
+}
 // TODO: Multi-tenant user support — dokumentovati u novom ADR kada zatreba
 // TODO: Super Admin impersonation — dokumentovati u novom ADR kada zatreba

@@ -39,26 +39,30 @@ public class AuthService(AppDbContext db, IConfiguration config) : IAuthService
         await db.SaveChangesAsync();
 
         var (accessToken, expiresAt) = GenerateAccessToken(user);
-        return new AuthResponse(accessToken, refreshToken, expiresAt);
+        return new AuthResponse(accessToken, refreshToken, expiresAt, string.Empty);
     }
 
-    public async Task<AuthResponse> LoginAsync(LoginRequest request)
-    {
-        var user = await db.Users
-            .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(u => u.Email == request.Email);
+  public async Task<AuthResponse> LoginAsync(LoginRequest request)
+{
+    var user = await db.Users
+        .IgnoreQueryFilters()
+        .SingleOrDefaultAsync(u => u.Email == request.Email);
 
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            throw new UnauthorizedAccessException("Invalid credentials.");
+    if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var refreshToken = Guid.NewGuid().ToString();
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiresAt = DateTimeOffset.UtcNow.AddDays(7);
-        await db.SaveChangesAsync();
+    var tenant = await db.Tenants
+        .IgnoreQueryFilters()
+        .SingleOrDefaultAsync(t => t.Id == user.TenantId);
 
-        var (accessToken, expiresAt) = GenerateAccessToken(user);
-        return new AuthResponse(accessToken, refreshToken, expiresAt);
-    }
+    var refreshToken = Guid.NewGuid().ToString();
+    user.RefreshToken = refreshToken;
+    user.RefreshTokenExpiresAt = DateTimeOffset.UtcNow.AddDays(7);
+    await db.SaveChangesAsync();
+
+    var (accessToken, expiresAt) = GenerateAccessToken(user);
+    return new AuthResponse(accessToken, refreshToken, expiresAt, tenant?.Slug ?? string.Empty);
+}
 
     public async Task<AuthResponse> RefreshAsync(RefreshRequest request)
     {
@@ -75,7 +79,7 @@ public class AuthService(AppDbContext db, IConfiguration config) : IAuthService
         await db.SaveChangesAsync();
 
         var (accessToken, expiresAt) = GenerateAccessToken(user);
-        return new AuthResponse(accessToken, refreshToken, expiresAt);
+        return new AuthResponse(accessToken, refreshToken, expiresAt, string.Empty);
     }
 
     private (string token, DateTimeOffset expiresAt) GenerateAccessToken(User user)

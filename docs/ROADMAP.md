@@ -122,7 +122,7 @@ MVP za prvu autopraonicuu: rezervacije, terminal za radnike, vlasnički dashboar
 | ------- | ----------------------------------------- | --------- |
 | 1.1     | Backend: domenski model + rezervacije API | Završeno  |
 | 1.2     | Web: online booking flow (mušterija)      | Završeno  |
-| 1.3     | Web: terminal za radnike                  | Planirano |
+| 1.3     | Web: terminal za radnike                  | Završeno  |
 | 1.4     | Web: vlasnički dashboard                  | Planirano |
 
 #### Faza 1.1 — Backend: domenski model + rezervacije API
@@ -147,6 +147,20 @@ MVP za prvu autopraonicuu: rezervacije, terminal za radnike, vlasnički dashboar
 - Email potvrda putem Resend odmah pri kreiranju rezervacije
 - Success page `/book/[slug]/success` sa detaljima rezervacije
 - ADR-015: Resend integracija za transakcione emailove
+
+---
+
+#### Faza 1.3 — Worker terminal
+
+- Zaštićena ruta `/terminal/[slug]` — dostupna workerima i vlasnicima
+- Prikaz rezervacija za tekući dan grupisanih po statusu (Na čekanju / Potvrđeno / U toku)
+- Polling svakih 30 sekundi za real-time ažurnost
+- Akcije po state mašini: Potvrdi → Počni → Završi / Otkaži
+- Walk-in rezervacija direktno sa terminala (`CreatedBy = "Worker"`, status `Confirmed` odmah)
+- `GET /bays` endpoint — lista aktivnih boksova za tenant
+- `DevDataSeed` — seed worker naloga za dev okruženje
+- Touch-friendly UI prilagođen tablet upotrebi
+- ADR-016: Worker terminal arhitektura (polling vs WebSocket, role-based pristup)
 
 ---
 
