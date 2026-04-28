@@ -3,20 +3,25 @@ using WashBookPro.Api.Common.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using WashBookPro.Api.Modules.Tenants.Entities;
+using WashBookPro.Api.Common.Email;
 
 namespace WashBookPro.Api.Modules.Reservations;
 
 [ApiController]
 [Route("[controller]")]
-public class ReservationsController : ControllerBase
+public partial class ReservationsController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly ITenantContext _tenantContext;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<ReservationsController> _logger;
 
-    public ReservationsController(AppDbContext db, ITenantContext tenantContext)
+    public ReservationsController(AppDbContext db, ITenantContext tenantContext, IEmailService emailService, ILogger<ReservationsController> logger)
     {
         _db = db;
         _tenantContext = tenantContext;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     // GET /services
@@ -189,32 +194,26 @@ public class ReservationsController : ControllerBase
         _db.Reservations.Add(reservation);
         await _db.SaveChangesAsync();
 
+        try
+        {
+            await _emailService.SendBookingConfirmationAsync(
+                toEmail: request.CustomerEmail,
+                customerName: request.CustomerName,
+                serviceName: service.Name,
+                date: DateOnly.FromDateTime(request.StartsAt),
+                timeSlot: request.StartsAt.ToString("HH:mm"));
+        }catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send booking confirmation email for reservation {ReservationId}", reservation.Id);
+        }
+
         return CreatedAtAction(nameof(GetReservations),
             new { date = DateOnly.FromDateTime(reservation.StartsAt) },
             new { id = reservation.Id, reservation.Status });
 
     }
 
-    // GET /debug/services?tenantSlug=...
-    [HttpGet("/debug/services")]
-    public async Task<IActionResult> DebugServices([FromQuery] string tenantSlug)
-    {
-        var tenant = await _db.Tenants
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(t => t.Slug == tenantSlug);
 
-        var allServices = await _db.Services
-            .IgnoreQueryFilters()
-            .ToListAsync();
-
-        return Ok(new
-        {
-            tenantFound = tenant is not null,
-            tenantId = tenant?.Id,
-            totalServices = allServices.Count,
-            servicesForTenant = allServices.Count(s => s.TenantId == tenant!.Id)
-        });
-    }
 
     [HttpGet("/reservations")]
     [Authorize]
@@ -292,22 +291,5 @@ public class ReservationsController : ControllerBase
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(t => t.Slug == tenantSlug);
     }
-
-
-    // DTOs
-    public record CreateReservationRequest
-    {
-        public Guid BayId { get; init; }
-        public Guid ServiceId { get; init; }
-        public string CustomerName { get; init; } = string.Empty;
-        public string CustomerPhone { get; init; } = string.Empty;
-        public string? CustomerEmail { get; init; }
-        public DateTime StartsAt { get; init; }
-        public string? Notes { get; init; }
-        public string? CreatedBy { get; init; } // "Customer" or "Worker"
-        public string? TenantSlug { get; set; }
-    }
-
-    public record UpdateStatusRequest(ReservationStatus Status);
 
 }

@@ -105,7 +105,11 @@ Variables are filled in per-phase as noted in `.env.example`.
 | 0.6   | Week 9     | Next.js 16 web scaffold ✓                                                                |
 | 0.7   | Week 10    | React Native + Expo mobile scaffold ✓                                                    |
 | 0.8   | Week 11-12 | Docker Compose + CI/CD + deployment ✓                                                    |
-| 1     | Month 3-5  | MVP for owner's wash: reservations, worker terminal, owner dashboard                     |
+| 1     | Month 3-5  | MVP: reservations, worker terminal, owner dashboard                                      |
+| 1.1   | -          | Backend: domenski model + rezervacije API ✓                                              |
+| 1.2   | -          | Web: online booking flow (mušterija)                                                     |
+| 1.3   | -          | Web: terminal za radnike                                                                 |
+| 1.4   | -          | Web: vlasnički dashboard                                                                 |
 | 2     | Month 6-8  | ANPR anti-theft, B2B portal, notifications, mobile full-featured                         |
 | 3     | Month 9-11 | SaaS readiness: self-service onboarding, online payments, eFaktura, subscription billing |
 | 4     | Month 12+  | Growth, optimization, advanced features                                                  |

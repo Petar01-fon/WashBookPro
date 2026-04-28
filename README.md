@@ -34,8 +34,8 @@ i B2B fakturisanje.
 ## Struktura repozitorijuma
 
 ```
-/backend        ASP.NET Core 9 API
-/web            Next.js 15 web aplikacija
+/backend        ASP.NET Core 10 API
+/web            Next.js 16 web aplikacija
 /mobile         React Native + Expo
 /anpr-edge      Python ANPR servis
 /docs           Arhitekturna dokumentacija

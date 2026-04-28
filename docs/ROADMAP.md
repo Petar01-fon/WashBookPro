@@ -1,6 +1,6 @@
 # Roadmap — WashBookPro
 
-## Faza 0 — Temelji (Nedelja 1–12) · **U toku**
+## Faza 0 — Temelji (Nedelja 1–12) · **Završeno**
 
 Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipeline-a.
 
@@ -117,6 +117,36 @@ MVP za prvu autopraonicuu: rezervacije, terminal za radnike, vlasnički dashboar
 - Terminal za radnike (pregled dnevnog rasporeda, ažuriranje statusa)
 - Vlasnički dashboard (pregled prihoda, zaposlenost kapaciteta)
 - Osnovna notifikaciona podrška (email potvrde)
+
+| Podfaza | Opis                                      | Status    |
+| ------- | ----------------------------------------- | --------- |
+| 1.1     | Backend: domenski model + rezervacije API | Završeno  |
+| 1.2     | Web: online booking flow (mušterija)      | Završeno  |
+| 1.3     | Web: terminal za radnike                  | Planirano |
+| 1.4     | Web: vlasnički dashboard                  | Planirano |
+
+#### Faza 1.1 — Backend: domenski model + rezervacije API
+
+- Entiteti: `Bay`, `Service`, `Customer`, `Reservation` sa EF Core migracijama
+- `ReservationStatus` enum: Pending, Confirmed, InProgress, Completed, Cancelled
+- `ReservationSeed` — 6 fiksnih usluga (Car/SUV/Van × Basic/Deep)
+- REST endpointi: `GET /services`, `GET /bays`, `GET /availability`, `POST /reservations`,
+  `GET /reservations`, `PATCH /reservations/{id}/status`, `DELETE /reservations/{id}`
+- Tenant resolving za javne endpointe putem `tenantSlug` query parametra
+- Conflict detection sa `IgnoreQueryFilters()` za guest rezervacije
+- ADR-014: Mašina stanja rezervacije
+
+---
+
+#### Faza 1.2 — Web booking flow (mušterija)
+
+- Javna ruta `/book/[slug]` — bez autentikacije, dostupna svim mušterijama
+- Četvorokorački booking flow: odabir usluge → datum → slobodan termin → unos podataka
+- Fetch slobodnih termina putem `GET /availability`
+- `POST /reservations` sa statusom `Pending` za guest rezervacije
+- Email potvrda putem Resend odmah pri kreiranju rezervacije
+- Success page `/book/[slug]/success` sa detaljima rezervacije
+- ADR-015: Resend integracija za transakcione emailove
 
 ---
 

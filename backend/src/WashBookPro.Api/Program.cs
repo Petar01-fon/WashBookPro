@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using WashBookPro.Api.Common.Email;
 using WashBookPro.Api.Common.Middleware;
 using WashBookPro.Api.Common.Persistence;
 using WashBookPro.Api.Modules.Auth.Services;
@@ -46,6 +47,17 @@ builder.Services
             ClockSkew = TimeSpan.Zero,
         };
     });
+
+// Email
+builder.Services.AddHttpClient("Resend", client =>
+{
+    client.BaseAddress = new Uri("https://api.resend.com/");
+    client.DefaultRequestHeaders.Authorization = 
+        new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer", builder.Configuration["Resend:ApiKey"]);
+});
+
+builder.Services.AddTransient<IEmailService, ResendEmailService>();
 
 builder.Services.AddAuthorization();
 
