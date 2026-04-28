@@ -42,6 +42,24 @@ public partial class ReservationsController : ControllerBase
         return Ok(services);
     }
 
+    //GET /bays
+    [HttpGet("/bays")]
+    public async Task<IActionResult> GetBays([FromQuery] string tenantSlug)
+    {
+        var tenant = await ResolveTenantAsync(tenantSlug);
+        if (tenant is null)
+            return NotFound("Tenant not found");
+
+        var bays = await _db.Bays
+        .IgnoreQueryFilters()
+        .Where(b => b.TenantId == tenant.Id && b.IsActive)
+        .OrderBy(b => b.Name)
+        .Select(b => new { b.Id, b.Name })
+        .ToListAsync();
+
+        return Ok(bays);
+    }
+
     // GET / availability?date=2026-05-01&serviceId=...
     [HttpGet("/availability")]
     public async Task<IActionResult> GetAvailability(

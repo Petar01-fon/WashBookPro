@@ -86,6 +86,7 @@ using (var scope = app.Services.CreateScope())
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     var devTenantId = Guid.Parse(config["DevTenantId"]!);
     await ReservationSeed.SeedAsync(db, devTenantId);
+    await DevDataSeed.SeedAsync(db, devTenantId);
 }
 
 app.Run();
