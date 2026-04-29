@@ -42,23 +42,23 @@ public partial class ReservationsController : ControllerBase
         return Ok(services);
     }
 
-    //GET /bays
-    [HttpGet("/bays")]
-    public async Task<IActionResult> GetBays([FromQuery] string tenantSlug)
-    {
-        var tenant = await ResolveTenantAsync(tenantSlug);
-        if (tenant is null)
-            return NotFound("Tenant not found");
+    // //GET /bays
+    // [HttpGet("/bays")]
+    // public async Task<IActionResult> GetBays([FromQuery] string tenantSlug)
+    // {
+    //     var tenant = await ResolveTenantAsync(tenantSlug);
+    //     if (tenant is null)
+    //         return NotFound("Tenant not found");
 
-        var bays = await _db.Bays
-        .IgnoreQueryFilters()
-        .Where(b => b.TenantId == tenant.Id && b.IsActive)
-        .OrderBy(b => b.Name)
-        .Select(b => new { b.Id, b.Name })
-        .ToListAsync();
+    //     var bays = await _db.Bays
+    //     .IgnoreQueryFilters()
+    //     .Where(b => b.TenantId == tenant.Id && b.IsActive)
+    //     .OrderBy(b => b.Name)
+    //     .Select(b => new { b.Id, b.Name })
+    //     .ToListAsync();
 
-        return Ok(bays);
-    }
+    //     return Ok(bays);
+    // }
 
     // GET / availability?date=2026-05-01&serviceId=...
     [HttpGet("/availability")]
@@ -301,7 +301,51 @@ public partial class ReservationsController : ControllerBase
         return NoContent();
     }
 
+    // GET /reservations/stats?date=2026-05-01
+    [HttpGet("/reservations/stats")]
+    [Authorize(Roles = "Owner")]
+    public async Task<IActionResult> GetStats([FromQuery] DateOnly date)
+    {
+        var tenantId = _tenantContext.TenantId;
+        if (tenantId is null) return Unauthorized();
 
+        var dayStart = date.ToDateTime(new TimeOnly(0, 0), DateTimeKind.Utc);
+        var dayEnd = date.ToDateTime(new TimeOnly(23, 59, 59), DateTimeKind.Utc);
+
+        var monthStart = new DateTime(date.Year, date.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthEnd = monthStart.AddMonths(1).AddSeconds(-1);
+
+        var todayReservations = await _db.Reservations
+            .Include(r => r.Service)
+            .Where(r => r.StartsAt >= dayStart && r.StartsAt <= dayEnd)
+            .ToListAsync();
+
+        var monthReservations = await _db.Reservations
+            .Include(r => r.Service)
+            .Where(r => r.StartsAt >= monthStart && r.StartsAt <= monthEnd)
+            .ToListAsync();
+
+        var todayCompleted = todayReservations.Where(r => r.Status == ReservationStatus.Completed);
+        var monthCompleted = monthReservations.Where(r => r.Status == ReservationStatus.Completed);
+
+        return Ok(new
+        {
+            today = new
+            {
+                total = todayReservations.Count,
+                completed = todayCompleted.Count(),
+                cancelled = todayReservations.Count(r => r.Status == ReservationStatus.Cancelled),
+                pending = todayReservations.Count(r => r.Status == ReservationStatus.Pending),
+                revenueRsd = todayCompleted.Sum(r => r.Service.PriceRsd)
+            },
+            month = new
+            {
+                total = monthReservations.Count,
+                completed = monthCompleted.Count(),
+                revenueRsd = monthCompleted.Sum(r => r.Service.PriceRsd)
+            }
+        });
+    }
 
     private async Task<Tenant?> ResolveTenantAsync(string tenantSlug)
     {

@@ -68,7 +68,7 @@ export async function cancelReservation(
 }
 
 export async function getBays(tenantSlug: string): Promise<BayOption[]> {
-  return apiFetch<BayOption[]>(`/bays?tenantSlug=${tenantSlug}`);
+  return apiFetch<BayOption[]>(`/bays/public?tenantSlug=${tenantSlug}`);
 }
 
 export async function getServices(tenantSlug: string): Promise<ServiceOption[]> {
