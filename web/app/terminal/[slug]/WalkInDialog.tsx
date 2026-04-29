@@ -10,6 +10,17 @@ interface Props {
   onSuccess: () => void;
 }
 
+function generateTimeSlots(): string[] {
+  const slots: string[] = [];
+  for (let h = 8; h < 18; h++) {
+    slots.push(`${String(h).padStart(2, "0")}:00`);
+    slots.push(`${String(h).padStart(2, "0")}:30`);
+  }
+  return slots;
+}
+
+const TIME_SLOTS = generateTimeSlots();
+
 export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
   const [bays, setBays] = useState<BayOption[]>([]);
   const [services, setServices] = useState<ServiceOption[]>([]);
@@ -17,9 +28,10 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const now = new Date();
-  const localDatetime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
+  const localDate = now.toISOString().split("T")[0];
+  const currentMinutes = now.getMinutes();
+  const roundedTime = `${String(now.getHours()).padStart(2, "0")}:${currentMinutes < 30 ? "00" : "30"}`;
+  const initialTime = TIME_SLOTS.includes(roundedTime) ? roundedTime : "08:00";
 
   const [form, setForm] = useState({
     customerName: "",
@@ -27,7 +39,8 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
     customerEmail: "",
     serviceId: "",
     bayId: "",
-    startsAt: localDatetime,
+    date: localDate,
+    time: initialTime,
     notes: "",
   });
 
@@ -69,7 +82,7 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
         customerEmail: form.customerEmail,
         serviceId: form.serviceId,
         bayId: form.bayId,
-        startsAt: new Date(form.startsAt).toISOString(),
+        startsAt: new Date(`${form.date}T${form.time}:00`).toISOString(),
         notes: form.notes || undefined,
         createdBy: "Worker",
       }, token);
@@ -130,8 +143,25 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
           </Field>
 
           <Field label="Datum i vreme *">
-            <input name="startsAt" type="datetime-local" value={form.startsAt} onChange={handleChange}
-              className="input-field" />
+            <div className="flex gap-3">
+              <Field label="Datum *">
+                <input
+                  name="date"
+                  type="date"
+                  value={form.date}
+                  onChange={handleChange}
+                  min={localDate}
+                  className="input-field"
+                />
+              </Field>
+              <Field label="Vreme *">
+                <select name="time" value={form.time} onChange={handleChange} className="input-field">
+                  {TIME_SLOTS.map((slot) => (
+                    <option key={slot} value={slot}>{slot}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
           </Field>
 
           <Field label="Napomena">

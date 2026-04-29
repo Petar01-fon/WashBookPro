@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { login } from "@/lib/auth";
+import { getRole, getTenantSlug, login } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 
 function LoginForm() {
@@ -23,7 +23,16 @@ function LoginForm() {
     try {
       await login({ email, password });
       document.cookie = "washbook_authed=1; path=/; max-age=86400; SameSite=Strict";
-      router.push(from);
+      // router.push(from);
+      const role = getRole(); 
+        if (role === "Owner") {
+          router.push("/dashboard/reservations");
+        } else if (role === "Worker") {
+          const slug = getTenantSlug();
+          router.push(`/terminal/${slug}`);
+        } else {
+          router.push(from);
+        }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
