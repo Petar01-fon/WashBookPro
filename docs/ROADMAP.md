@@ -123,7 +123,7 @@ MVP za prvu autopraonicuu: rezervacije, terminal za radnike, vlasnički dashboar
 | 1.1     | Backend: domenski model + rezervacije API | Završeno  |
 | 1.2     | Web: online booking flow (mušterija)      | Završeno  |
 | 1.3     | Web: terminal za radnike                  | Završeno  |
-| 1.4     | Web: vlasnički dashboard                  | Planirano |
+| 1.4     | Web: vlasnički dashboard                  | Završeno  |
 
 #### Faza 1.1 — Backend: domenski model + rezervacije API
 
@@ -161,6 +161,25 @@ MVP za prvu autopraonicuu: rezervacije, terminal za radnike, vlasnički dashboar
 - `DevDataSeed` — seed worker naloga za dev okruženje
 - Touch-friendly UI prilagođen tablet upotrebi
 - ADR-016: Worker terminal arhitektura (polling vs WebSocket, role-based pristup)
+
+---
+
+#### Faza 1.4 — Vlasnički dashboard
+
+- Zaštićena ruta `/dashboard/*` — dostupna samo Owner ulozi
+- Sidebar navigacija sa tri sekcije: Rezervacije, Boksovi, Statistike
+- Nakon logina, redirect prema roli: Owner → `/dashboard/reservations`, Worker → `/terminal/[slug]`
+- `AuthResponse` proširena sa `TenantSlug` poljem — slug se čuva u `localStorage` pri loginu
+- `apiFetch` automatski čita JWT token iz `localStorage` bez eksplicitnog prosleđivanja
+- `dashboard-api.ts` — centralne fetch funkcije za owner dashboard
+- Stranica rezervacija: lista u tabeli + dnevni kalendar po kolonama boksova, navigacija po danima
+- Stranica boksova: pregled svih boksova, dodavanje, preimenovanje, toggle aktivnosti, soft delete
+- Stranica statistika: KPI kartice za tekući dan i mesec (broj rezervacija, prihod od završenih)
+- `BaysController` — odvojen od `ReservationsController`, Owner-only CRUD endpointi
+- `GET /bays/public?tenantSlug=` — javni endpoint za terminal i booking flow
+- `GET /reservations/stats?date=` — agregat po danu i mesecu, Owner only
+- Walk-in dialog: slobodni datetime input zamenjen odvojenim date poljem i dropdown slotovima (08:00–17:30, svakih 30 min)
+- ADR-017: Vlasnički dashboard arhitektura
 
 ---
 
