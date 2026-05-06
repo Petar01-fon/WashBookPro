@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   WashingMachine,
+  Wrench,
 } from "lucide-react";
 
 const navItems = [
@@ -27,6 +28,11 @@ const navItems = [
     href: "/dashboard/stats",
     icon: LayoutDashboard,
   },
+  {
+    label: "Usluge",
+    href: "/dashboard/services",
+    icon: Wrench,
+  }
 ];
 
 export function DashboardSidebar() {

@@ -1,16 +1,19 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export interface Service{
+export interface Service {
     id: string;
     name: string;
-    description: string;
+    vehicleCategory: string;
+    serviceType: string;
     durationMinutes: number;
-    price: number;
+    priceRsd: number;
 }
 
 export interface Timeslot {
-    startsAt: string; // ISO datetime
+   startsAt: string;
+    endsAt: string;
     bayId: string;
+    bayName: string;
 }
 
 export interface CreateReservationPayload {

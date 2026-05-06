@@ -1,4 +1,4 @@
-import { getAccessToken } from "./auth";
+import { getAccessToken, logout, tryRefresh } from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -40,14 +40,36 @@ export async function apiFetch<T>(
     body: body ? JSON.stringify(body) : undefined,
   });
 
+  if (response.status === 401 && !options.token) {
+    const refreshed = await tryRefresh();
+    if (refreshed) {
+      const newToken = getAccessToken();
+      const retryResponse = await fetch(`${API_URL}${path}`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${newToken}`,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (!retryResponse.ok) {
+        throw new ApiError(retryResponse.status, retryResponse.statusText);
+      }
+      if (retryResponse.status === 204) return undefined as T;
+      return retryResponse.json() as Promise<T>;
+    } else {
+      logout();
+      window.location.href = "/login";
+      throw new ApiError(401, "Session expired");
+    }
+  }
+
   if (!response.ok) {
     let message = response.statusText;
     try {
       const data = await response.json();
       message = data.error ?? data.message ?? data.title ?? message;
-    } catch {
-      // response nije JSON, koristimo statusText
-    }
+    } catch {}
     throw new ApiError(response.status, message);
   }
 

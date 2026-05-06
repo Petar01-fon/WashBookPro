@@ -131,7 +131,7 @@ const handleSelectService = (service: Service) => {
                 className="w-full text-left border rounded-xl p-4 hover:border-blue-500 transition"
               >
                 <p className="font-semibold">{s.name}</p>
-                <p className="text-sm text-gray-500">{s.durationMinutes} min · {s.price} RSD</p>
+                <p className="text-sm text-gray-500">{s.durationMinutes} min · {s.priceRsd} RSD</p>
               </button>
             ))}
           </div>

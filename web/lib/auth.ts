@@ -96,3 +96,24 @@ export function saveTenantSlug(slug: string): void {
 }
 // TODO: Multi-tenant user support — dokumentovati u novom ADR kada zatreba
 // TODO: Super Admin impersonation — dokumentovati u novom ADR kada zatreba
+
+export async function tryRefresh(): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    saveTokens(data.accessToken, data.refreshToken);
+    return true;
+  } catch {
+    return false;
+  }
+}

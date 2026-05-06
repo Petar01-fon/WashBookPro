@@ -24,41 +24,8 @@ public partial class ReservationsController : ControllerBase
         _logger = logger;
     }
 
-    // GET /services
-    [HttpGet("/services")]
-    public async Task<IActionResult> GetServices([FromQuery] string tenantSlug)
-    {
-        var tenant = await ResolveTenantAsync(tenantSlug);
-        if (tenant is null)
-            return NotFound("Tenant not found");
 
-        var services = await _db.Services
-        .IgnoreQueryFilters()
-        .Where(s => s.TenantId == tenant.Id && s.IsActive)
-        .OrderBy(s => s.VehicleCategory)
-        .ThenBy(s => s.ServiceType)
-        .ToListAsync();
 
-        return Ok(services);
-    }
-
-    // //GET /bays
-    // [HttpGet("/bays")]
-    // public async Task<IActionResult> GetBays([FromQuery] string tenantSlug)
-    // {
-    //     var tenant = await ResolveTenantAsync(tenantSlug);
-    //     if (tenant is null)
-    //         return NotFound("Tenant not found");
-
-    //     var bays = await _db.Bays
-    //     .IgnoreQueryFilters()
-    //     .Where(b => b.TenantId == tenant.Id && b.IsActive)
-    //     .OrderBy(b => b.Name)
-    //     .Select(b => new { b.Id, b.Name })
-    //     .ToListAsync();
-
-    //     return Ok(bays);
-    // }
 
     // GET / availability?date=2026-05-01&serviceId=...
     [HttpGet("/availability")]
@@ -92,35 +59,32 @@ public partial class ReservationsController : ControllerBase
             .ToListAsync();
 
         var slots = new List<object>();
+        var slotStart = dayStart;
 
-        foreach (var bay in bays)
+       while (slotStart.AddMinutes(service.DurationMinutes) <= dayEnd)
         {
-            var slotStart = dayStart;
+            var slotEnd = slotStart.AddMinutes(service.DurationMinutes);
 
-            while (slotStart.AddMinutes(service.DurationMinutes) <= dayEnd)
-            {
-                var slotEnd = slotStart.AddMinutes(service.DurationMinutes);
-
-                var isOccupied = existingReservations.Any(r =>
+            // Pronađi prvi slobodan boks u ovom terminu
+            var freeBay = bays.FirstOrDefault(bay =>
+                !existingReservations.Any(r =>
                     r.BayId == bay.Id &&
                     r.StartsAt < slotEnd &&
-                    r.EndsAt > slotStart);
+                    r.EndsAt > slotStart));
 
-                if (!isOccupied)
+            if (freeBay != null)
+            {
+                slots.Add(new
                 {
-                    slots.Add(new
-                    {
-                        BayId = bay.Id,
-                        bayName = bay.Name,
-                        startsAt = slotStart,
-                        endsAt = slotEnd
-                    });
-                }
-
-                slotStart = slotEnd;
+                    bayId = freeBay.Id,
+                    bayName = freeBay.Name,
+                    startsAt = slotStart,
+                    endsAt = slotEnd
+                });
             }
-        }
 
+            slotStart = slotEnd;
+        }
 
         return Ok(slots);
     }
