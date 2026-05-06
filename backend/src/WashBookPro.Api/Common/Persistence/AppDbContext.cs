@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using WashBookPro.Api.Modules.Auth.Entities;
+using WashBookPro.Api.Modules.Customers.Entities;
 using WashBookPro.Api.Modules.Tenants.Entities;
 
 namespace WashBookPro.Api.Common.Persistence;
@@ -17,6 +18,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<CustomerAccount> CustomerAccounts => Set<CustomerAccount>();
     public DbSet<Bay> Bays => Set<Bay>();
     public DbSet<Service> Services => Set<Service>();
     public DbSet<Customer> Customers => Set<Customer>();
@@ -53,6 +55,19 @@ public class AppDbContext : DbContext
             b.Property(u => u.Role).IsRequired().HasMaxLength(50);
             b.Property(u => u.RefreshToken).HasMaxLength(512);
             b.HasIndex(u => new { u.TenantId, u.Email }).IsUnique();
+        });
+
+        modelBuilder.Entity<CustomerAccount>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Email).IsRequired().HasMaxLength(256);
+            b.Property(c => c.FirstName).IsRequired().HasMaxLength(100);
+            b.Property(c => c.LastName).IsRequired().HasMaxLength(100);
+            b.Property(c => c.PhoneNumber).HasMaxLength(50);
+            b.Property(c => c.GoogleId).HasMaxLength(128);
+            b.Property(c => c.RefreshToken).HasMaxLength(512);
+            b.HasIndex(c => c.Email).IsUnique();
+            b.HasIndex(c => c.GoogleId).IsUnique().HasFilter("\"GoogleId\" IS NOT NULL");
         });
 
         modelBuilder.Entity<Reservation>().HasIndex(r => new { r.BayId, r.StartsAt });

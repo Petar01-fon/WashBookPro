@@ -7,6 +7,7 @@ using WashBookPro.Api.Common.Email;
 using WashBookPro.Api.Common.Middleware;
 using WashBookPro.Api.Common.Persistence;
 using WashBookPro.Api.Modules.Auth.Services;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,14 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             ClockSkew = TimeSpan.Zero,
         };
+    })
+    .AddCookie("ExternalCookie")
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Google:ClientId"] ?? string.Empty;
+        options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? string.Empty;
+        options.CallbackPath = "/auth/google/callback";
+        options.SignInScheme = "ExternalCookie";
     });
 
 // Email
