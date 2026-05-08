@@ -42,7 +42,7 @@ monitoring, payments, customer notifications, and B2B invoicing.
 | SMS / Viber    | Infobip               | NOT Twilio                            |
 | Payments       | AllSecure or Monri    | NOT Stripe (B2C market)               |
 | ANPR           | PlateRecognizer       |                                       |
-| Email          | Resend                | Transactional emails, added in Faza 2 |
+| Email          | Resend                | Transactional emails, implemented in Faza 1 (ADR-015) |
 | Object storage | MinIO (S3-compatible) |                                       |
 
 ---
@@ -97,7 +97,7 @@ Variables are filled in per-phase as noted in `.env.example`.
 
 | Phase | Period     | Description                                                                              |
 | ----- | ---------- | ---------------------------------------------------------------------------------------- |
-| 0.1   | Week 1     | Repo setup + documentation foundation (this phase) ✓                                     |
+| 0.1   | Week 1     | Repo setup + documentation foundation ✓                                                  |
 | 0.2   | Week 1-2   | Local dev environment: Node.js, PostgreSQL, Docker ✓                                     |
 | 0.3   | Week 3-4   | ASP.NET Core 10 backend scaffold with modules ✓                                          |
 | 0.4   | Week 5-6   | PostgreSQL + EF Core + multi-tenant foundation ✓                                         |
@@ -105,11 +105,14 @@ Variables are filled in per-phase as noted in `.env.example`.
 | 0.6   | Week 9     | Next.js 16 web scaffold ✓                                                                |
 | 0.7   | Week 10    | React Native + Expo mobile scaffold ✓                                                    |
 | 0.8   | Week 11-12 | Docker Compose + CI/CD + deployment ✓                                                    |
-| 1     | Month 3-5  | MVP: reservations, worker terminal, owner dashboard                                      |
-| 1.1   | -          | Backend: domenski model + rezervacije API ✓                                              |
-| 1.2   | -          | Web: online booking flow (mušterija)                                                     |
-| 1.3   | -          | Web: terminal za radnike                                                                 |
-| 1.4   | -          | Web: vlasnički dashboard                                                                 |
-| 2     | Month 6-8  | ANPR anti-theft, B2B portal, notifications, mobile full-featured                         |
+| 1     | Month 3-5  | MVP: reservations, worker terminal, owner dashboard ✓                                    |
+| 1.1   | -          | Backend: domain model + reservations API + Resend email ✓                                |
+| 1.2   | -          | Web: online booking flow (/book/[slug]) ✓                                                |
+| 1.3   | -          | Web: worker terminal (/terminal/[slug]) ✓                                                |
+| 1.4   | -          | Web: owner dashboard (/dashboard) — stats, bays CRUD ✓                                  |
+| 1.5   | -          | Web + backend: services management CRUD ✓                                                |
+| 1.6   | -          | Customer auth (B2C) + profile: Google OAuth + email/password, CustomerAccount, /profil ✓ |
+| 1.7   | -          | Landing page ("Confident Utility" design) ✓                                              |
+| 2     | Month 6-8  | ANPR anti-theft, B2B portal, SMS/Viber notifications, mobile full-featured               |
 | 3     | Month 9-11 | SaaS readiness: self-service onboarding, online payments, eFaktura, subscription billing |
 | 4     | Month 12+  | Growth, optimization, advanced features                                                  |
