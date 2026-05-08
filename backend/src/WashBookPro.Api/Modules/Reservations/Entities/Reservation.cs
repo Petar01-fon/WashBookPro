@@ -1,4 +1,5 @@
 using WashBookPro.Api.Common.Persistence;
+using WashBookPro.Api.Modules.Reservations.Entities;
 
 public class Reservation : ITenantScoped
 {
@@ -11,7 +12,7 @@ public class Reservation : ITenantScoped
     public DateTime EndsAt { get; set; }
     public ReservationStatus Status { get; set; } = ReservationStatus.Pending;
     public string? Notes { get; set; }
-    public string CreatedBy { get; set; } = string.Empty;
+    public ReservationCreatedBy CreatedBy { get; set; } = ReservationCreatedBy.Customer;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public Bay Bay { get; set; } = null!;

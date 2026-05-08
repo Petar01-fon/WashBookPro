@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using WashBookPro.Api.Modules.Tenants.Entities;
 using WashBookPro.Api.Common.Email;
+using WashBookPro.Api.Modules.Reservations.Entities;
 
 namespace WashBookPro.Api.Modules.Reservations;
 
@@ -178,7 +179,10 @@ public partial class ReservationsController : ControllerBase
             EndsAt = endsAt,
             Status = request.CreatedBy == "Worker" ? ReservationStatus.Confirmed : ReservationStatus.Pending,
             Notes = request.Notes,
-            CreatedBy = request.CreatedBy ?? "Customer",
+            // TODO ADR-024 Commit 2: ukloni TryParse — request.CreatedBy ne postoji više u DTO-u,
+            // CreatedBy je server-driven (Customer za public rutu, Worker za /walk-in)
+            CreatedBy = Enum.TryParse<ReservationCreatedBy>(request.CreatedBy, ignoreCase: true, out var cb)
+                ? cb : ReservationCreatedBy.Customer,
         };
 
         _db.Reservations.Add(reservation);
