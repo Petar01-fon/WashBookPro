@@ -21,10 +21,10 @@ export function HowItWorks() {
     <section id="kako-radi" className="bg-white py-24">
       <div className="max-w-6xl mx-auto px-6">
         <div className="mb-16">
-          <p className="font-mono text-xs uppercase tracking-widest text-[#2563EB]">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--wb-accent)]">
             Kako radi
           </p>
-          <h2 className="mt-3 text-4xl font-bold text-[#0A0E27] tracking-tight">
+          <h2 className="mt-3 text-4xl font-bold text-[var(--wb-fg)] tracking-tight">
             Tri koraka do čistog auta.
           </h2>
         </div>
@@ -32,20 +32,20 @@ export function HowItWorks() {
         <div className="relative grid md:grid-cols-3 gap-10">
           {/* Connecting line */}
           <div
-            className="hidden md:block absolute top-8 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-px bg-[#E8E6E0]"
+            className="hidden md:block absolute top-8 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-px bg-[var(--wb-border)]"
             aria-hidden
           />
 
           {steps.map((s) => (
             <div key={s.num} className="space-y-5">
-              <div className="relative w-16 h-16 rounded-xl border border-[#E8E6E0] bg-[#FAFAF7] flex items-center justify-center">
-                <span className="font-mono text-2xl font-bold text-[#0A0E27]">
+              <div className="relative w-16 h-16 rounded-xl border border-[var(--wb-border)] bg-[var(--wb-bg)] flex items-center justify-center">
+                <span className="font-mono text-2xl font-bold text-[var(--wb-fg)]">
                   {s.num}
                 </span>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-[#0A0E27]">{s.title}</h3>
-                <p className="mt-2 text-[rgba(10,14,39,0.6)] leading-relaxed">{s.desc}</p>
+                <h3 className="text-xl font-bold text-[var(--wb-fg)]">{s.title}</h3>
+                <p className="mt-2 text-[var(--wb-muted)] leading-relaxed">{s.desc}</p>
               </div>
             </div>
           ))}

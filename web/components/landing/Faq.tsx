@@ -36,24 +36,24 @@ export function Faq() {
     <section id="faq" className="bg-white py-24">
       <div className="max-w-3xl mx-auto px-6">
         <div className="mb-12">
-          <p className="font-mono text-xs uppercase tracking-widest text-[#2563EB]">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--wb-accent)]">
             FAQ
           </p>
-          <h2 className="mt-3 text-4xl font-bold text-[#0A0E27] tracking-tight">
+          <h2 className="mt-3 text-4xl font-bold text-[var(--wb-fg)] tracking-tight">
             Često postavljana pitanja.
           </h2>
         </div>
 
-        <div className="divide-y divide-[#E8E6E0]">
+        <div className="divide-y divide-[var(--wb-border)]">
           {faqs.map((faq, i) => (
             <div key={i}>
               <button
                 onClick={() => setOpen(open === i ? null : i)}
                 className="w-full flex items-center justify-between py-5 text-left gap-4"
               >
-                <span className="font-medium text-[#0A0E27]">{faq.q}</span>
+                <span className="font-medium text-[var(--wb-fg)]">{faq.q}</span>
                 <span
-                  className={`text-[#2563EB] text-xl font-light shrink-0 transition-transform duration-200 ${
+                  className={`text-[var(--wb-accent)] text-xl font-light shrink-0 transition-transform duration-200 ${
                     open === i ? "rotate-45" : "rotate-0"
                   }`}
                 >
@@ -61,7 +61,7 @@ export function Faq() {
                 </span>
               </button>
               {open === i && (
-                <p className="text-sm text-[rgba(10,14,39,0.6)] leading-relaxed pb-5">
+                <p className="text-sm text-[var(--wb-muted)] leading-relaxed pb-5">
                   {faq.a}
                 </p>
               )}

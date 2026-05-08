@@ -1,14 +1,14 @@
 export function Demo() {
   return (
-    <section className="bg-[#FAFAF7] py-24">
+    <section className="bg-[var(--wb-bg)] py-24">
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left — text */}
           <div className="space-y-6">
-            <p className="font-mono text-xs uppercase tracking-widest text-[#2563EB]">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--wb-accent)]">
               Booking flow
             </p>
-            <h2 className="text-4xl font-bold text-[#0A0E27] tracking-tight leading-tight">
+            <h2 className="text-4xl font-bold text-[var(--wb-fg)] tracking-tight leading-tight">
               Od izbora usluge<br />do potvrde za 4 klika.
             </h2>
             <div className="space-y-5 pt-2">
@@ -35,12 +35,12 @@ export function Demo() {
                 },
               ].map((step) => (
                 <div key={step.n} className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
+                  <div className="w-8 h-8 rounded-full bg-[var(--wb-accent)]/10 text-[var(--wb-accent)] flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
                     {step.n}
                   </div>
                   <div>
-                    <p className="font-semibold text-[#0A0E27]">{step.t}</p>
-                    <p className="text-sm text-[rgba(10,14,39,0.6)] mt-0.5 leading-relaxed">
+                    <p className="font-semibold text-[var(--wb-fg)]">{step.t}</p>
+                    <p className="text-sm text-[var(--wb-muted)] mt-0.5 leading-relaxed">
                       {step.d}
                     </p>
                   </div>
@@ -50,24 +50,24 @@ export function Demo() {
           </div>
 
           {/* Right — mockup */}
-          <div className="bg-white rounded-2xl border border-[#E8E6E0] p-6 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl border border-[var(--wb-border)] p-6 shadow-sm space-y-4">
             {/* Progress bar */}
             <div className="flex gap-1.5">
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
                   className={`flex-1 h-1 rounded-full ${
-                    i <= 3 ? "bg-[#2563EB]" : "bg-[#E8E6E0]"
+                    i <= 3 ? "bg-[var(--wb-accent)]" : "bg-[#E8E6E0]"
                   }`}
                 />
               ))}
             </div>
 
             <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-[rgba(10,14,39,0.4)]">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--wb-fg)]/40">
                 Korak 3 od 4 · Slobodni termini
               </p>
-              <h4 className="text-sm font-semibold text-[#0A0E27] mt-1">
+              <h4 className="text-sm font-semibold text-[var(--wb-fg)] mt-1">
                 Sreda, 7. maj 2026.
               </h4>
             </div>
@@ -86,10 +86,10 @@ export function Demo() {
                   key={t}
                   className={`text-center text-xs py-2.5 rounded-xl font-medium border transition-colors ${
                     state === "selected"
-                      ? "bg-[#2563EB] text-white border-[#2563EB]"
+                      ? "bg-[var(--wb-accent)] text-white border-[var(--wb-accent)]"
                       : state === "taken"
-                      ? "bg-[#F5F5F3] text-[rgba(10,14,39,0.25)] border-[#E8E6E0] line-through"
-                      : "text-[#0A0E27] border-[#E8E6E0]"
+                      ? "bg-[#F5F5F3] text-[var(--wb-fg)]/25 border-[var(--wb-border)] line-through"
+                      : "text-[var(--wb-fg)] border-[var(--wb-border)]"
                   }`}
                 >
                   {t}
@@ -97,14 +97,14 @@ export function Demo() {
               ))}
             </div>
 
-            <div className="border-t border-[#E8E6E0] pt-4 flex items-center justify-between text-xs">
-              <span className="text-[rgba(10,14,39,0.6)]">
+            <div className="border-t border-[var(--wb-border)] pt-4 flex items-center justify-between text-xs">
+              <span className="text-[var(--wb-muted)]">
                 Kompletno pranje · 60 min
               </span>
-              <span className="font-semibold text-[#0A0E27]">1.500 RSD</span>
+              <span className="font-semibold text-[var(--wb-fg)]">1.500 RSD</span>
             </div>
 
-            <button className="w-full bg-[#2563EB] text-white text-xs font-semibold py-2.5 rounded-xl">
+            <button className="w-full bg-[var(--wb-accent)] text-white text-xs font-semibold py-2.5 rounded-xl">
               Potvrdi termin
             </button>
           </div>

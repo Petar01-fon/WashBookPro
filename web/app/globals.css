@@ -138,6 +138,7 @@
   --wb-border: #E8E6E0;
   --wb-muted: rgba(10, 14, 39, 0.6);
   --wb-border-dark: rgba(255, 255, 255, 0.12);
+  --wb-error: #EF4444;
 }
 
 .input-field {
