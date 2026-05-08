@@ -253,6 +253,13 @@ namespace WashBookPro.Api.Common.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<TimeOnly?>("ClosingTime")
+                        .HasColumnType("time without time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -263,6 +270,9 @@ namespace WashBookPro.Api.Common.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<TimeOnly?>("OpeningTime")
+                        .HasColumnType("time without time zone");
 
                     b.Property<string>("Slug")
                         .IsRequired()

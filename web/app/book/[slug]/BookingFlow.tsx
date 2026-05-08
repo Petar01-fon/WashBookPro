@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
+    getTenantBySlug,
     getServices,
     getAvailability,
     createReservation,
     Service,
-    Timeslot
+    Timeslot,
+    TenantInfo,
 } from "@/lib/booking-api";
+import { isCustomerLoggedIn, fetchCustomerProfile, CustomerProfile } from "@/lib/customer-auth";
 
 interface Props {
     slug: string;
@@ -31,6 +34,23 @@ export default function BookingFlow({ slug }: Props) {
     const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null);
+    const [tenant, setTenant] = useState<TenantInfo | null>(null);
+
+    useEffect(() => {
+        Promise.all([
+            getTenantBySlug(slug).then(setTenant).catch(() => {}),
+            isCustomerLoggedIn()
+                ? fetchCustomerProfile().then((p) => {
+                      if (!p) return;
+                      setCustomerProfile(p);
+                      setCustomerName(`${p.firstName} ${p.lastName}`);
+                      setCustomerEmail(p.email);
+                      setCustomerPhone(p.phoneNumber);
+                  })
+                : Promise.resolve(),
+        ]);
+    }, [slug]);
 
     // Step 1 — Load and pick service
 const loadServices = async () => {
@@ -189,7 +209,13 @@ const handleSelectService = (service: Service) => {
         {/* Step 4 — Unesi podatke */}
         {step === 4 && (
           <div className="space-y-4">
-            <p className="text-gray-600">Vaši podaci:</p>
+            {customerProfile ? (
+              <div className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                Ulogovan kao <strong>{customerProfile.firstName} {customerProfile.lastName}</strong>
+              </div>
+            ) : (
+              <p className="text-gray-600">Vaši podaci:</p>
+            )}
             <input
               type="text"
               placeholder="Ime i prezime"

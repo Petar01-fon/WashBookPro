@@ -1,5 +1,14 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+export interface TenantInfo {
+    id: string;
+    name: string;
+    slug: string;
+    address: string | null;
+    openingTime: string | null;
+    closingTime: string | null;
+}
+
 export interface Service {
     id: string;
     name: string;
@@ -34,6 +43,14 @@ export interface ReservationResult {
     startsAt: string;
     customerName: string;
     customerEmail: string;
+}
+
+export async function getTenantBySlug(slug: string): Promise<TenantInfo> {
+    const res = await fetch(`${API_URL}/tenants/by-slug/${encodeURIComponent(slug)}`, {
+        cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Tenant not found");
+    return res.json();
 }
 
 export async function getServices(slug: string): Promise<Service[]> {

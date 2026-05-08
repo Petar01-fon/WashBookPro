@@ -45,6 +45,7 @@ public class AppDbContext : DbContext
             b.Property(t => t.Name).IsRequired().HasMaxLength(200);
             b.Property(t => t.Slug).IsRequired().HasMaxLength(100);
             b.HasIndex(t => t.Slug).IsUnique();
+            b.Property(t => t.Address).HasMaxLength(500);
         });
 
         modelBuilder.Entity<User>(b =>

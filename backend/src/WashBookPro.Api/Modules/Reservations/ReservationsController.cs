@@ -50,12 +50,19 @@ public partial class ReservationsController : ControllerBase
             .Where(b => b.IsActive && b.TenantId == tenant.Id)
             .ToListAsync();
 
-        var dayStart = date.ToDateTime(new TimeOnly(8, 0), DateTimeKind.Utc); // 8:00 AM
-        var dayEnd = date.ToDateTime(new TimeOnly(18, 0), DateTimeKind.Utc); // 6:00 PM
+        var opening = tenant.OpeningTime ?? new TimeOnly(8, 0);
+        var closing = tenant.ClosingTime ?? new TimeOnly(18, 0);
+        if (tenant.OpeningTime is null || tenant.ClosingTime is null)
+            _logger.LogWarning("Tenant {TenantId} has no OpeningTime/ClosingTime — falling back to 08:00/18:00", tenant.Id);
+
+        var dayStart = date.ToDateTime(opening, DateTimeKind.Utc);
+        var dayEnd   = date.ToDateTime(closing, DateTimeKind.Utc);
 
         var existingReservations = await _db.Reservations
-            .Where(r => r.StartsAt >= dayStart && r.EndsAt <= dayEnd
-            && r.Status != ReservationStatus.Cancelled)
+            .IgnoreQueryFilters()
+            .Where(r => r.TenantId == tenant.Id &&
+                        r.StartsAt >= dayStart && r.EndsAt <= dayEnd &&
+                        r.Status != ReservationStatus.Cancelled)
             .ToListAsync();
 
         var slots = new List<object>();
@@ -143,6 +150,7 @@ public partial class ReservationsController : ControllerBase
             return Conflict("The selected time slot is no longer available");
 
         var customer = await _db.Customers
+            .IgnoreQueryFilters()
             .Where(c => c.Phone == request.CustomerPhone && c.TenantId == tenantId)
             .FirstOrDefaultAsync();
 
