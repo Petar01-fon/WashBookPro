@@ -102,6 +102,12 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-sm space-y-6 rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <div>
+          <a
+            href="/"
+            className="mb-4 inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition"
+          >
+            ← Nazad na početnu
+          </a>
           <h1 className="text-2xl font-semibold">WashBookPro</h1>
           <p className="text-sm text-gray-500">Prijavite se na vaš nalog</p>
         </div>

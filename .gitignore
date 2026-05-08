@@ -87,4 +87,4 @@ infra/.env
 *.cer
 
 # Claude Code local settings
-.claude/settings.local.json
+.claude/

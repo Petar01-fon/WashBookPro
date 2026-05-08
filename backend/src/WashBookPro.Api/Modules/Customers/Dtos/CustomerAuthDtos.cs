@@ -27,3 +27,7 @@ public record CustomerAuthResponse(
     string AccessToken,
     string RefreshToken,
     DateTimeOffset ExpiresAt);
+
+public record ChangeEmailRequest(string NewEmail, string CurrentPassword);
+
+public record ChangePasswordRequest(string CurrentPassword, string NewPassword);

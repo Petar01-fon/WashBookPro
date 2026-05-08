@@ -74,6 +74,8 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       RESEND__APIKEY: ${RESEND_API_KEY}
       RESEND__FROMEMAIL: ${RESEND_FROM_EMAIL}
+      Google__ClientId: ${GOOGLE_CLIENT_ID}
+      Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     networks:
@@ -90,6 +92,8 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     container_name: washbook-web
     restart: unless-stopped
+    environment:
+      INTERNAL_API_URL: ${INTERNAL_API_URL}
     ports:
       - "${WEB_PORT:-3000}:3000"
     networks:

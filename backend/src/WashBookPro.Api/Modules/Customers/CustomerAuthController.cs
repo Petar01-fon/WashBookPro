@@ -15,7 +15,10 @@ namespace WashBookPro.Api.Modules.Customers;
 
 [ApiController]
 [Route("auth/customer")]
-public class CustomerAuthController(AppDbContext db, IConfiguration config) : ControllerBase
+public class CustomerAuthController(
+    AppDbContext db,
+    IConfiguration config,
+    ILogger<CustomerAuthController> logger) : ControllerBase
 {
     // POST /auth/customer/register
     [HttpPost("register")]
@@ -177,6 +180,71 @@ public class CustomerAuthController(AppDbContext db, IConfiguration config) : Co
             customer.Email, customer.PhoneNumber));
     }
 
+    // PUT /auth/customer/me/email
+    [HttpPut("me/email")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> ChangeEmail(ChangeEmailRequest request)
+    {
+        if (!IsValidEmail(request.NewEmail))
+            return BadRequest(new { error = "Neispravan format email adrese." });
+
+        var customerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var customer = await db.CustomerAccounts.FindAsync(customerId);
+        if (customer is null) return NotFound();
+
+        if (customer.PasswordHash is null ||
+            !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, customer.PasswordHash))
+            return BadRequest(new { error = "Trenutna lozinka nije ispravna." });
+
+        var emailTaken = await db.CustomerAccounts
+            .AnyAsync(c => c.Email == request.NewEmail && c.Id != customerId);
+        if (emailTaken)
+            return Conflict(new { error = "Email adresa je već zauzeta." });
+
+        var oldEmail = customer.Email;
+        customer.Email = request.NewEmail;
+        await db.SaveChangesAsync();
+
+        // TODO: send verification email to new address in Faza 2
+        logger.LogInformation(
+            "Customer {CustomerId} changed email from {OldEmail} to {NewEmail}",
+            customerId, oldEmail, request.NewEmail);
+
+        return NoContent();
+    }
+
+    // PUT /auth/customer/me/password
+    [HttpPut("me/password")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 6)
+            return BadRequest(new { error = "Nova lozinka mora imati najmanje 6 karaktera." });
+
+        var customerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var customer = await db.CustomerAccounts.FindAsync(customerId);
+        if (customer is null) return NotFound();
+
+        if (customer.PasswordHash is null ||
+            !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, customer.PasswordHash))
+            return BadRequest(new { error = "Trenutna lozinka nije ispravna." });
+
+        customer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
+        // Token rotation: issue new pair for current device, invalidate all others.
+        var newRefresh = Guid.NewGuid().ToString();
+        customer.RefreshToken = newRefresh;
+        customer.RefreshTokenExpiresAt = DateTimeOffset.UtcNow.AddDays(30);
+        await db.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Customer {CustomerId} changed password. All other sessions invalidated via token rotation.",
+            customerId);
+
+        var (accessToken, expiresAt) = GenerateAccessToken(customer);
+        return Ok(new CustomerAuthResponse(accessToken, newRefresh, expiresAt));
+    }
+
     private (string token, DateTimeOffset expiresAt) GenerateAccessToken(CustomerAccount customer)
     {
         var secret = config["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret not configured.");
@@ -187,6 +255,9 @@ public class CustomerAuthController(AppDbContext db, IConfiguration config) : Co
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, customer.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.GivenName, customer.FirstName),
+            new Claim(JwtRegisteredClaimNames.FamilyName, customer.LastName),
+            new Claim(JwtRegisteredClaimNames.Email, customer.Email),
             new Claim(ClaimTypes.Role, "Customer"),
         };
 
@@ -198,5 +269,18 @@ public class CustomerAuthController(AppDbContext db, IConfiguration config) : Co
             signingCredentials: creds);
 
         return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
