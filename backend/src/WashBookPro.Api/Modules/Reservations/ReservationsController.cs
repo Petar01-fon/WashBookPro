@@ -25,10 +25,7 @@ public partial class ReservationsController : ControllerBase
         _logger = logger;
     }
 
-
-
-
-    // GET / availability?date=2026-05-01&serviceId=...
+    // GET /availability?date=2026-05-01&serviceId=...
     [HttpGet("/availability")]
     public async Task<IActionResult> GetAvailability(
         [FromQuery] DateOnly date,
@@ -47,7 +44,7 @@ public partial class ReservationsController : ControllerBase
             return NotFound("Service not found");
 
         var bays = await _db.Bays
-        .IgnoreQueryFilters()
+            .IgnoreQueryFilters()
             .Where(b => b.IsActive && b.TenantId == tenant.Id)
             .ToListAsync();
 
@@ -69,11 +66,10 @@ public partial class ReservationsController : ControllerBase
         var slots = new List<object>();
         var slotStart = dayStart;
 
-       while (slotStart.AddMinutes(service.DurationMinutes) <= dayEnd)
+        while (slotStart.AddMinutes(service.DurationMinutes) <= dayEnd)
         {
             var slotEnd = slotStart.AddMinutes(service.DurationMinutes);
 
-            // Pronađi prvi slobodan boks u ovom terminu
             var freeBay = bays.FirstOrDefault(bay =>
                 !existingReservations.Any(r =>
                     r.BayId == bay.Id &&
@@ -97,62 +93,91 @@ public partial class ReservationsController : ControllerBase
         return Ok(slots);
     }
 
-
-
-    // POST /reservations
-    [HttpPost("/reservations")]
-    public async Task<IActionResult> CreateReservation([FromBody] CreateReservationRequest request)
+    // POST /reservations — public, guest/customer booking
+    [HttpPost]
+    [AllowAnonymous]
+    public async Task<IActionResult> Create([FromBody] CreateReservationRequest request)
     {
+        var tenant = await ResolveTenantAsync(request.TenantSlug);
+        if (tenant is null)
+            return NotFound("Tenant not found");
 
-        Guid tenantId;
+        var reservation = await CreateReservationCoreAsync(
+            tenantId: tenant.Id,
+            serviceId: request.ServiceId,
+            bayId: request.BayId,
+            startsAt: request.StartsAt,
+            customerName: request.CustomerName,
+            customerPhone: request.CustomerPhone,
+            customerEmail: request.CustomerEmail,
+            notes: request.Notes,
+            status: ReservationStatus.Pending,
+            createdBy: ReservationCreatedBy.Customer);
 
-        if (request.CreatedBy == "Worker")
-        {
-            if (_tenantContext.TenantId is null)
-                return Unauthorized();
-            tenantId = _tenantContext.TenantId.Value;
-        }
-        else
-        {
-            if (string.IsNullOrEmpty(request.TenantSlug))
-                return BadRequest("Tenant slug is required for customer reservations");
+        if (reservation is null) return Conflict("The selected time slot is no longer available");
+        return StatusCode(201, new { id = reservation.Id, status = (int)reservation.Status });
+    }
 
-            var tenant = await ResolveTenantAsync(request.TenantSlug);
-            if (tenant is null)
-                return NotFound("Tenant not found");
-            tenantId = tenant.Id;
-        }
+    // POST /reservations/walk-in — authorized, worker/owner terminal
+    [HttpPost("walk-in")]
+    [Authorize(Roles = "Worker,Owner")]
+    public async Task<IActionResult> CreateWalkIn([FromBody] WalkInRequest request)
+    {
+        var tenantId = _tenantContext.TenantId;
+        if (tenantId is null) return Unauthorized();
 
+        var reservation = await CreateReservationCoreAsync(
+            tenantId: tenantId.Value,
+            serviceId: request.ServiceId,
+            bayId: request.BayId,
+            startsAt: request.StartsAt,
+            customerName: request.CustomerName,
+            customerPhone: request.CustomerPhone,
+            customerEmail: request.CustomerEmail,
+            notes: request.Notes,
+            status: ReservationStatus.Confirmed,
+            createdBy: ReservationCreatedBy.Worker);
 
+        if (reservation is null) return Conflict("The selected time slot is no longer available");
+        return StatusCode(201, new { id = reservation.Id, status = (int)reservation.Status });
+    }
+
+    private async Task<Reservation?> CreateReservationCoreAsync(
+        Guid tenantId,
+        Guid serviceId,
+        Guid bayId,
+        DateTime startsAt,
+        string customerName,
+        string customerPhone,
+        string customerEmail,
+        string? notes,
+        ReservationStatus status,
+        ReservationCreatedBy createdBy)
+    {
         var service = await _db.Services
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(s => s.Id == request.ServiceId && s.TenantId == tenantId);
-
-        if (service == null)
-            return NotFound("Service not found");
+            .FirstOrDefaultAsync(s => s.Id == serviceId && s.TenantId == tenantId);
+        if (service == null) return null;
 
         var bay = await _db.Bays
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(b => b.Id == request.BayId && b.TenantId == tenantId);
-        if (bay == null)
-            return NotFound("Bay not found");
+            .FirstOrDefaultAsync(b => b.Id == bayId && b.TenantId == tenantId);
+        if (bay == null) return null;
 
-        var endsAt = request.StartsAt.AddMinutes(service.DurationMinutes);
+        var endsAt = startsAt.AddMinutes(service.DurationMinutes);
 
         var conflict = await _db.Reservations
             .IgnoreQueryFilters()
             .AnyAsync(r =>
-                r.BayId == request.BayId &&
+                r.BayId == bayId &&
                 r.Status != ReservationStatus.Cancelled &&
                 r.StartsAt < endsAt &&
-                r.EndsAt > request.StartsAt);
-
-        if (conflict)
-            return Conflict("The selected time slot is no longer available");
+                r.EndsAt > startsAt);
+        if (conflict) return null;
 
         var customer = await _db.Customers
             .IgnoreQueryFilters()
-            .Where(c => c.Phone == request.CustomerPhone && c.TenantId == tenantId)
+            .Where(c => c.Phone == customerPhone && c.TenantId == tenantId)
             .FirstOrDefaultAsync();
 
         if (customer is null)
@@ -161,9 +186,9 @@ public partial class ReservationsController : ControllerBase
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
-                Name = request.CustomerName,
-                Phone = request.CustomerPhone,
-                Email = request.CustomerEmail
+                Name = customerName,
+                Phone = customerPhone,
+                Email = customerEmail
             };
             _db.Customers.Add(customer);
         }
@@ -172,17 +197,14 @@ public partial class ReservationsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            BayId = request.BayId,
-            ServiceId = request.ServiceId,
+            BayId = bayId,
+            ServiceId = serviceId,
             Customer = customer,
-            StartsAt = request.StartsAt,
+            StartsAt = startsAt,
             EndsAt = endsAt,
-            Status = request.CreatedBy == "Worker" ? ReservationStatus.Confirmed : ReservationStatus.Pending,
-            Notes = request.Notes,
-            // TODO ADR-024 Commit 2: ukloni TryParse — request.CreatedBy ne postoji više u DTO-u,
-            // CreatedBy je server-driven (Customer za public rutu, Worker za /walk-in)
-            CreatedBy = Enum.TryParse<ReservationCreatedBy>(request.CreatedBy, ignoreCase: true, out var cb)
-                ? cb : ReservationCreatedBy.Customer,
+            Status = status,
+            Notes = notes,
+            CreatedBy = createdBy,
         };
 
         _db.Reservations.Add(reservation);
@@ -191,32 +213,27 @@ public partial class ReservationsController : ControllerBase
         try
         {
             await _emailService.SendBookingConfirmationAsync(
-                toEmail: request.CustomerEmail,
-                customerName: request.CustomerName,
+                toEmail: customerEmail,
+                customerName: customerName,
                 serviceName: service.Name,
-                date: DateOnly.FromDateTime(request.StartsAt),
-                timeSlot: request.StartsAt.ToString("HH:mm"));
-        }catch (Exception ex)
+                date: DateOnly.FromDateTime(startsAt),
+                timeSlot: startsAt.ToString("HH:mm"));
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send booking confirmation email for reservation {ReservationId}", reservation.Id);
         }
 
-        return CreatedAtAction(nameof(GetReservations),
-            new { date = DateOnly.FromDateTime(reservation.StartsAt) },
-            new { id = reservation.Id, reservation.Status });
-
+        return reservation;
     }
 
-
-
+    // GET /reservations
     [HttpGet("/reservations")]
     [Authorize]
-
     public async Task<IActionResult> GetReservations([FromQuery] DateOnly date)
     {
         var dayStart = date.ToDateTime(new TimeOnly(0, 0), DateTimeKind.Utc);
         var dayEnd = date.ToDateTime(new TimeOnly(23, 59, 59), DateTimeKind.Utc);
-
 
         var reservations = await _db.Reservations
             .Include(r => r.Bay)
@@ -256,7 +273,6 @@ public partial class ReservationsController : ControllerBase
         reservation.Status = request.Status;
         await _db.SaveChangesAsync();
         return NoContent();
-
     }
 
     // DELETE /reservations/{id}
@@ -273,7 +289,6 @@ public partial class ReservationsController : ControllerBase
 
         reservation.Status = ReservationStatus.Cancelled;
         await _db.SaveChangesAsync();
-
         return NoContent();
     }
 
@@ -329,5 +344,4 @@ public partial class ReservationsController : ControllerBase
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(t => t.Slug == tenantSlug);
     }
-
 }
