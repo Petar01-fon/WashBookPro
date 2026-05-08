@@ -92,10 +92,35 @@ app.MapHealthChecks("/health");
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    var devTenantId = Guid.Parse(config["DevTenantId"]!);
-    await ReservationSeed.SeedAsync(db, devTenantId);
-    await DevDataSeed.SeedAsync(db, devTenantId);
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    if (app.Environment.IsDevelopment())
+    {
+        try
+        {
+            await db.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to apply database migrations.");
+            throw;
+        }
+
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var devTenantId = Guid.Parse(config["DevTenantId"]!);
+
+        try
+        {
+            await ReservationSeed.SeedAsync(db, devTenantId);
+            await DevDataSeed.SeedAsync(db, devTenantId, isDevelopment: true);
+            logger.LogInformation("Dev seed completed.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Dev seed failed; continuing startup without seed.");
+        }
+    }
 }
 
 app.Run();

@@ -1,13 +1,66 @@
 using Microsoft.EntityFrameworkCore;
 using WashBookPro.Api.Common.Persistence;
 using WashBookPro.Api.Modules.Auth.Entities;
+using WashBookPro.Api.Modules.Tenants.Entities;
 
 public static class DevDataSeed
 {
-    public static async Task SeedAsync(AppDbContext db, Guid tenantId)
+    public static async Task SeedAsync(AppDbContext db, Guid tenantId, bool isDevelopment)
     {
+        if (!isDevelopment)
+            throw new InvalidOperationException("DevDataSeed must not run outside Development environment.");
+
+        await SeedTenantAsync(db, tenantId);
+        await SeedOwnerAsync(db, tenantId);
         await SeedWorkerAsync(db, tenantId);
+        await SeedBayAsync(db, tenantId);
         await SeedTenantContactFieldsAsync(db, tenantId);
+    }
+
+    private static async Task SeedTenantAsync(AppDbContext db, Guid tenantId)
+    {
+        var exists = await db.Tenants
+            .IgnoreQueryFilters()
+            .AnyAsync(t => t.Id == tenantId);
+
+        if (exists) return;
+
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Slug = "dev-wash",
+            Name = "Dev Wash",
+            Address = "Sedmog jula, Niš",
+            OpeningTime = new TimeOnly(8, 0),
+            ClosingTime = new TimeOnly(18, 0),
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedOwnerAsync(AppDbContext db, Guid tenantId)
+    {
+        var ownerEmail = "owner@devwash.local";
+
+        var exists = await db.Users
+            .IgnoreQueryFilters()
+            .AnyAsync(u => u.TenantId == tenantId && u.Email == ownerEmail);
+
+        if (exists) return;
+
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Email = ownerEmail,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Owner123!"),
+            Role = "Owner",
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task SeedWorkerAsync(AppDbContext db, Guid tenantId)
@@ -20,7 +73,7 @@ public static class DevDataSeed
 
         if (exists) return;
 
-        var worker = new User
+        db.Users.Add(new User
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
@@ -28,9 +81,27 @@ public static class DevDataSeed
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Worker123!"),
             Role = "Worker",
             CreatedAt = DateTimeOffset.UtcNow,
-        };
+        });
 
-        db.Users.Add(worker);
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedBayAsync(AppDbContext db, Guid tenantId)
+    {
+        var exists = await db.Bays
+            .IgnoreQueryFilters()
+            .AnyAsync(b => b.TenantId == tenantId);
+
+        if (exists) return;
+
+        db.Bays.Add(new Bay
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Name = "Bay 1",
+            IsActive = true,
+        });
+
         await db.SaveChangesAsync();
     }
 
