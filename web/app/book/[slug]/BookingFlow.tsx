@@ -108,7 +108,6 @@ const handleSelectService = (service: Service) => {
                 customerEmail,
                 startsAt: selectedSlot.startsAt,
                 notes : notes || undefined,
-                createdBy: "Customer",
                 tenantSlug: slug,
             });
             router.push(

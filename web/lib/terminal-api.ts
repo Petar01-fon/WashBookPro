@@ -3,13 +3,16 @@ import { apiFetch } from "./api";
 export type ReservationStatus = 0 | 1 | 2 | 3 | 4;
 // 0=Pending, 1=Confirmed, 2=InProgress, 3=Completed, 4=Cancelled
 
+export type ReservationCreatedBy = 0 | 1;
+// 0=Customer, 1=Worker
+
 export interface TerminalReservation {
   id: string;
   startsAt: string;
   endsAt: string;
   status: ReservationStatus;
   notes?: string;
-  createdBy: string;
+  createdBy: ReservationCreatedBy;
   bay: { id: string; name: string };
   service: { id: string; name: string; durationMinutes: number; priceRsd: number };
   customer: { id: string; name: string; phone: string };
@@ -35,7 +38,6 @@ export interface WalkInPayload {
   customerEmail: string;
   startsAt: string;
   notes?: string;
-  createdBy: "Worker";
 }
 
 export async function getReservations(
@@ -76,12 +78,10 @@ export async function getServices(tenantSlug: string): Promise<ServiceOption[]> 
 }
 
 export async function createWalkIn(
-  payload: WalkInPayload,
-  token: string
+  payload: WalkInPayload
 ): Promise<{ id: string; status: ReservationStatus }> {
-  return apiFetch(`/reservations`, {
+  return apiFetch(`/reservations/walk-in`, {
     method: "POST",
     body: payload,
-    token,
   });
 }

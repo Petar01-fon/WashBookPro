@@ -33,7 +33,6 @@ export interface CreateReservationPayload {
     customerEmail: string;
     startsAt: string; 
     notes?: string;
-    createdBy: "Customer";
     tenantSlug: string;
 }
 

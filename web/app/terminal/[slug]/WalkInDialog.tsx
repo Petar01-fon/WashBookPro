@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { getBays, getServices, createWalkIn, type BayOption, type ServiceOption } from "@/lib/terminal-api";
-import { getAccessToken } from "@/lib/auth";
 
 interface Props {
   slug: string;
@@ -69,9 +68,6 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
       return;
     }
 
-    const token = getAccessToken();
-    if (!token) return;
-
     setLoading(true);
     setError(null);
 
@@ -84,8 +80,7 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
         bayId: form.bayId,
         startsAt: new Date(`${form.date}T${form.time}:00`).toISOString(),
         notes: form.notes || undefined,
-        createdBy: "Worker",
-      }, token);
+      });
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Greška pri kreiranju rezervacije.");

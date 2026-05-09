@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { ReservationCreatedBy } from "@/lib/terminal-api";
 
 export type BayItem = {
   id: string;
@@ -12,7 +13,7 @@ export type ReservationItem = {
   endsAt: string;
   status: number;
   notes: string | null;
-  createdBy: string;
+  createdBy: ReservationCreatedBy;
   bay: { id: string; name: string };
   service: { id: string; name: string; durationMinutes: number; priceRsd: number };
   customer: { id: string; name: string; phone: string };
