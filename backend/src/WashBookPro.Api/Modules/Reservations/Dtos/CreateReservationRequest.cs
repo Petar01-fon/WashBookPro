@@ -10,6 +10,7 @@ public partial class ReservationsController
         public Guid ServiceId { get; init; }
         public Guid BayId { get; init; }
         public DateTime StartsAt { get; init; }
+        public string? PlateNumber { get; init; }
         [Required]
         public string CustomerName { get; init; } = string.Empty;
         [Required]

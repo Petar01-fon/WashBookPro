@@ -102,11 +102,16 @@ public partial class ReservationsController : ControllerBase
         if (tenant is null)
             return NotFound("Tenant not found");
 
+        var plateNumber = string.IsNullOrWhiteSpace(request.PlateNumber)
+            ? null
+            : request.PlateNumber.Trim().ToUpperInvariant();
+
         var reservation = await CreateReservationCoreAsync(
             tenantId: tenant.Id,
             serviceId: request.ServiceId,
             bayId: request.BayId,
             startsAt: request.StartsAt,
+            plateNumber: plateNumber,
             customerName: request.CustomerName,
             customerPhone: request.CustomerPhone,
             customerEmail: request.CustomerEmail,
@@ -131,6 +136,7 @@ public partial class ReservationsController : ControllerBase
             serviceId: request.ServiceId,
             bayId: request.BayId,
             startsAt: request.StartsAt,
+            plateNumber: null,
             customerName: request.CustomerName,
             customerPhone: request.CustomerPhone,
             customerEmail: request.CustomerEmail,
@@ -147,6 +153,7 @@ public partial class ReservationsController : ControllerBase
         Guid serviceId,
         Guid bayId,
         DateTime startsAt,
+        string? plateNumber,
         string customerName,
         string customerPhone,
         string customerEmail,
@@ -203,6 +210,7 @@ public partial class ReservationsController : ControllerBase
             StartsAt = startsAt,
             EndsAt = endsAt,
             Status = status,
+            PlateNumber = plateNumber,
             Notes = notes,
             CreatedBy = createdBy,
         };

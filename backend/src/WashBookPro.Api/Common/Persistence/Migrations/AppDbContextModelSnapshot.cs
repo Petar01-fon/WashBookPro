@@ -92,6 +92,10 @@ namespace WashBookPro.Api.Common.Persistence.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
+                    b.Property<string>("PlateNumber")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<Guid>("ServiceId")
                         .HasColumnType("uuid");
 

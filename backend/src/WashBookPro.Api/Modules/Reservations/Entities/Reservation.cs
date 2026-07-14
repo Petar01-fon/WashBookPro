@@ -11,6 +11,7 @@ public class Reservation : ITenantScoped
     public DateTime StartsAt { get; set; }
     public DateTime EndsAt { get; set; }
     public ReservationStatus Status { get; set; } = ReservationStatus.Pending;
+    public string? PlateNumber { get; set; }
     public string? Notes { get; set; }
     public ReservationCreatedBy CreatedBy { get; set; } = ReservationCreatedBy.Customer;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

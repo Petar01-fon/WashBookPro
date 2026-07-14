@@ -71,7 +71,11 @@ public class AppDbContext : DbContext
             b.HasIndex(c => c.GoogleId).IsUnique().HasFilter("\"GoogleId\" IS NOT NULL");
         });
 
-        modelBuilder.Entity<Reservation>().HasIndex(r => new { r.BayId, r.StartsAt });
+        modelBuilder.Entity<Reservation>(b =>
+        {
+            b.HasIndex(r => new { r.BayId, r.StartsAt });
+            b.Property(r => r.PlateNumber).HasMaxLength(16);
+        });
     }
 
     private void ApplyTenantFilter<T>(ModelBuilder modelBuilder) where T : class, ITenantScoped
