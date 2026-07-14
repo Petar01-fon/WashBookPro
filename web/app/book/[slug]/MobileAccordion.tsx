@@ -1,11 +1,16 @@
 "use client";
 
+import { Service } from "@/lib/booking-api";
 import { BookingAction, BookingState } from "./bookingReducer";
 import { isStepFilled, stepSummaryLabel } from "./summary";
 import { StepStub } from "./StepStub";
+import { CategoryStep } from "./CategoryStep";
 import { STEP_META } from "./stepMeta";
 
 interface Props {
+    services: Service[];
+    loading: boolean;
+    error: boolean;
     state: BookingState;
     dispatch: (action: BookingAction) => void;
 }
@@ -13,7 +18,7 @@ interface Props {
 // Mobile-only vertical accordion. Exactly one step is open (state.step);
 // the rest render as collapsed rows — accent/filled if a value was picked,
 // neutral/muted otherwise. Tapping a filled collapsed row reopens it.
-export function MobileAccordion({ state, dispatch }: Props) {
+export function MobileAccordion({ services, loading, error, state, dispatch }: Props) {
     return (
         <div className="space-y-3">
             {STEP_META.map((meta) => {
@@ -26,14 +31,24 @@ export function MobileAccordion({ state, dispatch }: Props) {
                             key={meta.step}
                             className="rounded-2xl border border-[var(--wb-accent)] bg-white p-5"
                         >
-                            <StepStub
-                                title={meta.title}
-                                description={meta.description}
-                                showBack={meta.step > 1}
-                                nextLabel={meta.step === 4 ? "Potvrdi" : "Dalje"}
-                                onBack={() => dispatch({ type: "BACK" })}
-                                onAdvance={() => dispatch({ type: "ADVANCE" })}
-                            />
+                            {meta.step === 1 ? (
+                                <CategoryStep
+                                    services={services}
+                                    loading={loading}
+                                    error={error}
+                                    state={state}
+                                    dispatch={dispatch}
+                                />
+                            ) : (
+                                <StepStub
+                                    title={meta.title}
+                                    description={meta.description}
+                                    showBack={meta.step > 1}
+                                    nextLabel={meta.step === 4 ? "Potvrdi" : "Dalje"}
+                                    onBack={() => dispatch({ type: "BACK" })}
+                                    onAdvance={() => dispatch({ type: "ADVANCE" })}
+                                />
+                            )}
                         </div>
                     );
                 }

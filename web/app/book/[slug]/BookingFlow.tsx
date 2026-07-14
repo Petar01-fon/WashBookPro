@@ -2,8 +2,10 @@
 
 import { useReducer } from "react";
 import { bookingReducer, initialBookingState } from "./bookingReducer";
+import { useServices } from "./useServices";
 import { STEP_META } from "./stepMeta";
 import { StepStub } from "./StepStub";
+import { CategoryStep } from "./CategoryStep";
 import { BookingProgressBar } from "./BookingProgressBar";
 import { SummarySidebar } from "./SummarySidebar";
 import { MobileAccordion } from "./MobileAccordion";
@@ -19,6 +21,7 @@ interface Props {
 export default function BookingFlow({ slug }: Props) {
     const [state, dispatch] = useReducer(bookingReducer, initialBookingState);
     const activeMeta = STEP_META.find((m) => m.step === state.step)!;
+    const { services, loading, error } = useServices(slug);
 
     return (
         <div className="min-h-screen bg-[var(--wb-bg)]">
@@ -29,14 +32,24 @@ export default function BookingFlow({ slug }: Props) {
                 </div>
                 <div className="grid grid-cols-[1fr_320px] gap-10 items-start">
                     <div className="rounded-2xl border border-[var(--wb-border)] bg-white p-8">
-                        <StepStub
-                            title={activeMeta.title}
-                            description={activeMeta.description}
-                            showBack={state.step > 1}
-                            nextLabel={state.step === 4 ? "Potvrdi" : "Dalje"}
-                            onBack={() => dispatch({ type: "BACK" })}
-                            onAdvance={() => dispatch({ type: "ADVANCE" })}
-                        />
+                        {state.step === 1 ? (
+                            <CategoryStep
+                                services={services}
+                                loading={loading}
+                                error={error}
+                                state={state}
+                                dispatch={dispatch}
+                            />
+                        ) : (
+                            <StepStub
+                                title={activeMeta.title}
+                                description={activeMeta.description}
+                                showBack={state.step > 1}
+                                nextLabel={state.step === 4 ? "Potvrdi" : "Dalje"}
+                                onBack={() => dispatch({ type: "BACK" })}
+                                onAdvance={() => dispatch({ type: "ADVANCE" })}
+                            />
+                        )}
                     </div>
                     <SummarySidebar state={state} />
                 </div>
@@ -45,7 +58,13 @@ export default function BookingFlow({ slug }: Props) {
             {/* Mobile: vertical accordion stepper, no progress circles */}
             <div className="lg:hidden px-4 py-8">
                 <h1 className="text-xl font-bold text-[var(--wb-fg)] mb-6">Rezervacija</h1>
-                <MobileAccordion state={state} dispatch={dispatch} />
+                <MobileAccordion
+                    services={services}
+                    loading={loading}
+                    error={error}
+                    state={state}
+                    dispatch={dispatch}
+                />
             </div>
         </div>
     );

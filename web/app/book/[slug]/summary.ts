@@ -1,12 +1,11 @@
 import { BookingState, Step } from "./bookingReducer";
 
-// Gate C: state only ever holds stub placeholders, so this just proves the
-// wiring. Gate D replaces the per-step logic with real formatted values
-// (service name, date/time, customer name).
+// Step 1 is real (D1). Steps 2-4 still hold stub placeholders until their
+// own gates land.
 export function stepSummaryLabel(step: Step, state: BookingState): string {
     switch (step) {
         case 1:
-            return state.category ?? "—";
+            return state.serviceName ? `${state.category} · ${state.serviceName}` : "—";
         case 2:
             return state.slot ? "Izabran termin" : "—";
         case 3:
@@ -19,7 +18,7 @@ export function stepSummaryLabel(step: Step, state: BookingState): string {
 export function isStepFilled(step: Step, state: BookingState): boolean {
     switch (step) {
         case 1:
-            return !!state.category;
+            return !!state.serviceId;
         case 2:
             return !!state.slot;
         case 3:
