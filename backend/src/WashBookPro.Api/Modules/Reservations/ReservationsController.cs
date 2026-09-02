@@ -16,6 +16,12 @@ public partial class ReservationsController : ControllerBase
     // already use in GetAvailability — see the "sub-30-min cutoff" comment there.
     private static readonly TimeZoneInfo BelgradeTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Belgrade");
 
+    // Gap between consecutive slot starts, on top of the service duration — worker
+    // breather / cushion for running late. Not part of Reservation.EndsAt (that stays
+    // pure wash duration) and not part of the overlap check — it only spaces out
+    // candidate slot starts in GetAvailability's loop.
+    private const int SlotBufferMinutes = 15;
+
     private readonly AppDbContext _db;
     private readonly ITenantContext _tenantContext;
     private readonly IEmailService _emailService;
@@ -98,7 +104,7 @@ public partial class ReservationsController : ControllerBase
 
             if (earliestBookable is not null && slotStart < earliestBookable)
             {
-                slotStart = slotEnd;
+                slotStart = slotStart.AddMinutes(service.DurationMinutes + SlotBufferMinutes);
                 continue;
             }
 
@@ -119,7 +125,7 @@ public partial class ReservationsController : ControllerBase
                 });
             }
 
-            slotStart = slotEnd;
+            slotStart = slotStart.AddMinutes(service.DurationMinutes + SlotBufferMinutes);
         }
 
         return Ok(slots);
