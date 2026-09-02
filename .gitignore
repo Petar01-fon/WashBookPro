@@ -20,6 +20,7 @@ obj/
 *.user
 *.suo
 *.cache
+*.lscache
 [Pp]ublish/
 [Ll]ogs/
 .vs/

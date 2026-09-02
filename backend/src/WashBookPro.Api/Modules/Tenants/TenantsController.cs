@@ -32,6 +32,7 @@ public class TenantsController(AppDbContext db) : ControllerBase
                 t.Name,
                 t.Slug,
                 t.Address,
+                t.Phone,
                 OpeningTime = t.OpeningTime.HasValue ? t.OpeningTime.Value.ToString("HH:mm") : (string?)null,
                 ClosingTime = t.ClosingTime.HasValue ? t.ClosingTime.Value.ToString("HH:mm") : (string?)null,
             })

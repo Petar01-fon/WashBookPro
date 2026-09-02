@@ -31,6 +31,7 @@ public static class DevDataSeed
             Slug = "dev-wash",
             Name = "Dev Wash",
             Address = "Sedmog jula, Niš",
+            Phone = "018/123-456",
             OpeningTime = new TimeOnly(8, 0),
             ClosingTime = new TimeOnly(18, 0),
             IsActive = true,
@@ -115,6 +116,8 @@ public static class DevDataSeed
 
         if (tenant.Address is null)
             tenant.Address = "Sedmog jula, Niš";
+        if (tenant.Phone is null)
+            tenant.Phone = "018/123-456";
         if (!tenant.OpeningTime.HasValue)
             tenant.OpeningTime = new TimeOnly(8, 0);
         if (!tenant.ClosingTime.HasValue)

@@ -46,6 +46,11 @@ public class AppDbContext : DbContext
             b.Property(t => t.Slug).IsRequired().HasMaxLength(100);
             b.HasIndex(t => t.Slug).IsUnique();
             b.Property(t => t.Address).HasMaxLength(500);
+            // No format validation on purpose — Serbian phone formats vary
+            // (018/123-456, +381 61 111 1111, 060-1234567). Same reasoning as
+            // Reservation.PlateNumber: the owner enters it once and sees a typo
+            // themselves; a regex would reject more valid entries than it'd catch.
+            b.Property(t => t.Phone).HasMaxLength(32);
         });
 
         modelBuilder.Entity<User>(b =>

@@ -277,6 +277,10 @@ namespace WashBookPro.Api.Common.Persistence.Migrations
                     b.Property<TimeOnly?>("OpeningTime")
                         .HasColumnType("time without time zone");
 
+                    b.Property<string>("Phone")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(100)

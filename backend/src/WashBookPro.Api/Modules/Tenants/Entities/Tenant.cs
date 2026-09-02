@@ -10,6 +10,7 @@ public class Tenant
 
     // TODO: structurirati u Street/City/PostalCode kad dođu B2B/multi-location features
     public string? Address { get; set; }
+    public string? Phone { get; set; }
     public TimeOnly? OpeningTime { get; set; }
     public TimeOnly? ClosingTime { get; set; }
 }
