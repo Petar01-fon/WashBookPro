@@ -386,12 +386,23 @@ public partial class ReservationsController : ControllerBase
 
         try
         {
+            // startsAt is a genuine UTC instant (see the GetAvailability comment on
+            // dayStart/dayEnd above) but its Kind tag isn't guaranteed to say so —
+            // System.Text.Json only sets Kind=Utc for a "...Z" suffixed request body
+            // (what every current client sends via .toISOString()); a hypothetical
+            // client sending an explicit "+02:00" offset instead would deserialize
+            // to Kind=Local, which ConvertTimeFromUtc rejects with ArgumentException.
+            // SpecifyKind pins it to Utc regardless of the tag, matching the actual
+            // domain invariant, so the conversion below can't throw on Kind alone.
+            var startsAtBelgrade = TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.SpecifyKind(startsAt, DateTimeKind.Utc), BelgradeTimeZone);
+
             await _emailService.SendBookingConfirmationAsync(
                 toEmail: customerEmail,
                 customerName: customerName,
                 serviceName: service.Name,
-                date: DateOnly.FromDateTime(startsAt),
-                timeSlot: startsAt.ToString("HH:mm"));
+                date: DateOnly.FromDateTime(startsAtBelgrade),
+                timeSlot: startsAtBelgrade.ToString("HH:mm"));
         }
         catch (Exception ex)
         {
