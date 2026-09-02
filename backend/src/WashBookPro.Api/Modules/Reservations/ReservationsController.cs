@@ -397,12 +397,26 @@ public partial class ReservationsController : ControllerBase
             var startsAtBelgrade = TimeZoneInfo.ConvertTimeFromUtc(
                 DateTime.SpecifyKind(startsAt, DateTimeKind.Utc), BelgradeTimeZone);
 
-            await _emailService.SendBookingConfirmationAsync(
-                toEmail: customerEmail,
-                customerName: customerName,
-                serviceName: service.Name,
-                date: DateOnly.FromDateTime(startsAtBelgrade),
-                timeSlot: startsAtBelgrade.ToString("HH:mm"));
+            // Neither caller (Create, CreateWalkIn) has the full Tenant loaded at
+            // this point — Create resolves one via ResolveTenantAsync but only
+            // threads tenant.Id through, and CreateWalkIn only ever has the Guid
+            // from ITenantContext. Queried here instead of widening either caller's
+            // signature, consistent with how Service/Bay/Customer are already
+            // fetched locally in this method.
+            var tenant = await _db.Tenants
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+            await _emailService.SendBookingConfirmationAsync(new BookingConfirmationEmail(
+                ToEmail: customerEmail,
+                CustomerName: customerName,
+                ServiceName: service.Name,
+                PriceRsd: service.PriceRsd,
+                PlateNumber: plateNumber,
+                StartsAtBelgrade: startsAtBelgrade,
+                TenantName: tenant?.Name ?? "WashBookPro",
+                TenantAddress: tenant?.Address,
+                TenantPhone: tenant?.Phone));
         }
         catch (Exception ex)
         {
