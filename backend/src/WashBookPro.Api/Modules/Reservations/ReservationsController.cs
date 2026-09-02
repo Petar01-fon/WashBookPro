@@ -53,9 +53,13 @@ public partial class ReservationsController : ControllerBase
         if (service == null)
             return NotFound("Service not found");
 
+        // Deterministic order: when two bays offer the same candidate start, the
+        // dedup below keeps whichever bay is iterated first — without an explicit
+        // order that "first" was DB-dependent and effectively random.
         var bays = await _db.Bays
             .IgnoreQueryFilters()
             .Where(b => b.IsActive && b.TenantId == tenant.Id)
+            .OrderBy(b => b.Name)
             .ToListAsync();
 
         var opening = tenant.OpeningTime ?? new TimeOnly(8, 0);
@@ -67,7 +71,7 @@ public partial class ReservationsController : ControllerBase
         // then convert through the zone's DST rules to get a true UTC instant —
         // dayStart/dayEnd/slotStart must live in the same real-timeline space as
         // Reservation.StartsAt (a genuine UTC instant, see WalkInDialog.tsx's
-        // .toISOString()), otherwise the freeBay overlap check below compares two
+        // .toISOString()), otherwise the free-window check below compares two
         // clocks running up to 2 hours apart.
         var dayStartLocal = date.ToDateTime(opening, DateTimeKind.Unspecified);
         var dayEndLocal   = date.ToDateTime(closing, DateTimeKind.Unspecified);
@@ -84,51 +88,175 @@ public partial class ReservationsController : ControllerBase
         var todayBelgrade = DateOnly.FromDateTime(nowBelgrade);
         DateTime? earliestBookable = date == todayBelgrade ? nowUtc.AddMinutes(30) : null;
 
-        // Standard overlap condition, not "fully contained in the day" — a reservation
-        // is not required to start/end within opening/closing hours (nothing enforces
-        // that at creation), so one that straddles dayStart or dayEnd must still be
-        // pulled in, or the freeBay check below won't see it.
+        // Widened by SlotBufferMinutes on both ends versus the raw [dayStart, dayEnd]
+        // overlap: a reservation ending exactly at dayStart still has an inflated end
+        // (dayStart + buffer) that must block the first slot of the day, and
+        // symmetrically a reservation starting exactly at dayEnd has an inflated start
+        // that must block the last slot. The plain overlap condition misses both.
         var existingReservations = await _db.Reservations
             .IgnoreQueryFilters()
             .Where(r => r.TenantId == tenant.Id &&
-                        r.StartsAt < dayEnd && r.EndsAt > dayStart &&
+                        r.StartsAt < dayEnd.AddMinutes(SlotBufferMinutes) &&
+                        r.EndsAt > dayStart.AddMinutes(-SlotBufferMinutes) &&
                         r.Status != ReservationStatus.Cancelled)
             .ToListAsync();
 
-        var slots = new List<object>();
-        var slotStart = dayStart;
-
-        while (slotStart.AddMinutes(service.DurationMinutes) <= dayEnd)
+        // Per-bay free windows, not one global 08:00-anchored grid: each bay's
+        // occupied intervals are inflated ±SlotBufferMinutes, clamped to the day,
+        // merged, and complemented — so a bay that frees up mid-morning is offered
+        // from the moment it's actually free, not from wherever a single shared grid
+        // next happens to land.
+        var candidatesByStart = new SortedDictionary<DateTime, (Guid BayId, string BayName, DateTime EndsAt)>();
+        foreach (var bay in bays)
         {
-            var slotEnd = slotStart.AddMinutes(service.DurationMinutes);
+            var freeWindows = BuildFreeWindowsForBay(bay.Id, existingReservations, dayStart, dayEnd);
+            freeWindows = ApplyCutoff(freeWindows, earliestBookable);
 
-            if (earliestBookable is not null && slotStart < earliestBookable)
+            foreach (var window in freeWindows)
             {
-                slotStart = slotStart.AddMinutes(service.DurationMinutes + SlotBufferMinutes);
-                continue;
-            }
-
-            var freeBay = bays.FirstOrDefault(bay =>
-                !existingReservations.Any(r =>
-                    r.BayId == bay.Id &&
-                    r.StartsAt < slotEnd &&
-                    r.EndsAt > slotStart));
-
-            if (freeBay != null)
-            {
-                slots.Add(new
+                foreach (var candidate in GenerateCandidates(window, service.DurationMinutes))
                 {
-                    bayId = freeBay.Id,
-                    bayName = freeBay.Name,
-                    startsAt = slotStart,
-                    endsAt = slotEnd
-                });
+                    // The customer picks a time, not a bay — only one bay is shown
+                    // per start. First bay (in the deterministic Name order above)
+                    // to reach a given start wins; later bays offering the same
+                    // start are dropped.
+                    if (!candidatesByStart.ContainsKey(candidate.Start))
+                        candidatesByStart[candidate.Start] = (bay.Id, bay.Name, candidate.End);
+                }
             }
-
-            slotStart = slotStart.AddMinutes(service.DurationMinutes + SlotBufferMinutes);
         }
 
+        var slots = candidatesByStart.Select(kv => new
+        {
+            bayId = kv.Value.BayId,
+            bayName = kv.Value.BayName,
+            startsAt = kv.Key,
+            endsAt = kv.Value.EndsAt
+        });
+
         return Ok(slots);
+    }
+
+    // Occupied intervals for this bay, inflated ±SlotBufferMinutes, clamped to
+    // [dayStart, dayEnd], merged where touching/overlapping, then complemented —
+    // the gaps between (and before the first / after the last) merged block are
+    // this bay's free windows for the day. A bay with no reservations returns the
+    // whole day as one window; a bay booked solid all day returns no windows.
+    private static List<(DateTime Start, DateTime End)> BuildFreeWindowsForBay(
+        Guid bayId,
+        List<Reservation> reservationsForDay,
+        DateTime dayStart,
+        DateTime dayEnd)
+    {
+        var blocked = new List<(DateTime Start, DateTime End)>();
+        foreach (var r in reservationsForDay)
+        {
+            if (r.BayId != bayId) continue;
+
+            var inflatedStart = r.StartsAt.AddMinutes(-SlotBufferMinutes);
+            var inflatedEnd = r.EndsAt.AddMinutes(SlotBufferMinutes);
+            var clampedStart = inflatedStart < dayStart ? dayStart : inflatedStart;
+            var clampedEnd = inflatedEnd > dayEnd ? dayEnd : inflatedEnd;
+
+            // Drops entirely if clamping collapses it to zero/negative width — e.g.
+            // a reservation whose inflated interval never actually touches the day.
+            if (clampedStart < clampedEnd)
+                blocked.Add((clampedStart, clampedEnd));
+        }
+
+        blocked.Sort((a, b) => a.Start.CompareTo(b.Start));
+
+        var merged = new List<(DateTime Start, DateTime End)>();
+        foreach (var interval in blocked)
+        {
+            if (merged.Count > 0 && interval.Start <= merged[^1].End)
+            {
+                var last = merged[^1];
+                merged[^1] = (last.Start, interval.End > last.End ? interval.End : last.End);
+            }
+            else
+            {
+                merged.Add(interval);
+            }
+        }
+
+        var windows = new List<(DateTime Start, DateTime End)>();
+        var cursor = dayStart;
+        foreach (var block in merged)
+        {
+            if (cursor < block.Start)
+                windows.Add((cursor, block.Start));
+            if (block.End > cursor)
+                cursor = block.End;
+        }
+        if (cursor < dayEnd)
+            windows.Add((cursor, dayEnd));
+
+        return windows;
+    }
+
+    // Clamps each window's START (not the generated candidates) to the 30-min
+    // cutoff — this must happen before candidate generation, not as a filter on
+    // already-generated candidates. Filtering afterward would keep the window's
+    // original start as the grid's anchor, reproducing the exact anchoring bug
+    // this whole rework fixes, just one level down: a bay free since 08:00 with
+    // "now" at 09:00 (cutoff 09:30) would still grid 08:00/09:15/10:30/... from
+    // the old anchor and filter down to only 10:30, even though the bay has been
+    // genuinely free since 09:30. Clamping the window's start first makes 09:30
+    // (rounded) the new anchor instead.
+    private static List<(DateTime Start, DateTime End)> ApplyCutoff(
+        List<(DateTime Start, DateTime End)> windows,
+        DateTime? earliestBookable)
+    {
+        if (earliestBookable is null)
+            return windows;
+
+        var result = new List<(DateTime Start, DateTime End)>();
+        foreach (var window in windows)
+        {
+            var effectiveStart = window.Start > earliestBookable.Value ? window.Start : earliestBookable.Value;
+            if (effectiveStart < window.End)
+                result.Add((effectiveStart, window.End));
+            // else: the whole window is already in the past — dropped entirely.
+        }
+        return result;
+    }
+
+    // Candidate starts inside one (already cutoff-clamped) free window. The buffer
+    // is already baked into the window via BuildFreeWindowsForBay's inflation, so
+    // "fits in the window" is the only check needed here — it is NOT added again.
+    private static List<(DateTime Start, DateTime End)> GenerateCandidates(
+        (DateTime Start, DateTime End) window,
+        int durationMinutes)
+    {
+        var candidates = new List<(DateTime Start, DateTime End)>();
+        var start = RoundUpTo5Minutes(window.Start);
+        var step = durationMinutes + SlotBufferMinutes;
+
+        while (start.AddMinutes(durationMinutes) <= window.End)
+        {
+            candidates.Add((start, start.AddMinutes(durationMinutes)));
+            start = start.AddMinutes(step);
+        }
+
+        return candidates;
+    }
+
+    // Rounds up to the next 5-minute boundary, never down/backward — rounding
+    // backward would land inside the buffer the candidate is supposed to respect.
+    // Returns the same instant unchanged if it's already exactly on a 5-minute
+    // boundary with zero seconds/milliseconds. Kind is preserved explicitly since
+    // this always operates on true-UTC instants (dayStart or earliestBookable).
+    private static DateTime RoundUpTo5Minutes(DateTime dt)
+    {
+        var flooredToMinute = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0, 0, dt.Kind);
+        var alreadyOnBoundary = dt.Second == 0 && dt.Millisecond == 0 && flooredToMinute.Minute % 5 == 0;
+        if (alreadyOnBoundary)
+            return flooredToMinute;
+
+        var remainder = flooredToMinute.Minute % 5;
+        var minutesToNextBoundary = remainder == 0 ? 5 : 5 - remainder;
+        return flooredToMinute.AddMinutes(minutesToNextBoundary);
     }
 
     // POST /reservations — public, guest/customer booking
