@@ -57,22 +57,35 @@ public partial class ReservationsController : ControllerBase
         if (tenant.OpeningTime is null || tenant.ClosingTime is null)
             _logger.LogWarning("Tenant {TenantId} has no OpeningTime/ClosingTime — falling back to 08:00/18:00", tenant.Id);
 
-        var dayStart = date.ToDateTime(opening, DateTimeKind.Utc);
-        var dayEnd   = date.ToDateTime(closing, DateTimeKind.Utc);
+        // Opening/closing are Belgrade wall-clock hours. Build them as Unspecified,
+        // then convert through the zone's DST rules to get a true UTC instant —
+        // dayStart/dayEnd/slotStart must live in the same real-timeline space as
+        // Reservation.StartsAt (a genuine UTC instant, see WalkInDialog.tsx's
+        // .toISOString()), otherwise the freeBay overlap check below compares two
+        // clocks running up to 2 hours apart.
+        var dayStartLocal = date.ToDateTime(opening, DateTimeKind.Unspecified);
+        var dayEndLocal   = date.ToDateTime(closing, DateTimeKind.Unspecified);
+        var dayStart = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, BelgradeTimeZone);
+        var dayEnd   = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, BelgradeTimeZone);
 
-        // Customer must book at least 30 minutes ahead. "Now" and "today" are both
-        // computed as Belgrade wall-clock values (not DateTime.UtcNow directly) to
-        // stay in the same coordinate space dayStart/dayEnd already use above —
-        // mixing a true UTC instant into that space would shift the cutoff by the
-        // Belgrade UTC offset (+1h/+2h depending on DST). Future dates are untouched.
-        var nowBelgrade = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BelgradeTimeZone);
+        // Customer must book at least 30 minutes ahead. "Today" is a local-calendar
+        // question (does the requested date match Belgrade's current date), so
+        // todayBelgrade stays in local space. The cutoff instant itself now lives in
+        // true UTC — same space as dayStart/slotStart above — so no zone conversion
+        // is needed for the comparison itself.
+        var nowUtc = DateTime.UtcNow;
+        var nowBelgrade = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, BelgradeTimeZone);
         var todayBelgrade = DateOnly.FromDateTime(nowBelgrade);
-        DateTime? earliestBookable = date == todayBelgrade ? nowBelgrade.AddMinutes(30) : null;
+        DateTime? earliestBookable = date == todayBelgrade ? nowUtc.AddMinutes(30) : null;
 
+        // Standard overlap condition, not "fully contained in the day" — a reservation
+        // is not required to start/end within opening/closing hours (nothing enforces
+        // that at creation), so one that straddles dayStart or dayEnd must still be
+        // pulled in, or the freeBay check below won't see it.
         var existingReservations = await _db.Reservations
             .IgnoreQueryFilters()
             .Where(r => r.TenantId == tenant.Id &&
-                        r.StartsAt >= dayStart && r.EndsAt <= dayEnd &&
+                        r.StartsAt < dayEnd && r.EndsAt > dayStart &&
                         r.Status != ReservationStatus.Cancelled)
             .ToListAsync();
 
