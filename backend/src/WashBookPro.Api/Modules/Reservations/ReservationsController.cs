@@ -12,6 +12,10 @@ namespace WashBookPro.Api.Modules.Reservations;
 [Route("[controller]")]
 public partial class ReservationsController : ControllerBase
 {
+    // Matches the (naive-local-tagged-as-Utc) coordinate space dayStart/dayEnd
+    // already use in GetAvailability — see the "sub-30-min cutoff" comment there.
+    private static readonly TimeZoneInfo BelgradeTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Belgrade");
+
     private readonly AppDbContext _db;
     private readonly ITenantContext _tenantContext;
     private readonly IEmailService _emailService;
@@ -56,6 +60,15 @@ public partial class ReservationsController : ControllerBase
         var dayStart = date.ToDateTime(opening, DateTimeKind.Utc);
         var dayEnd   = date.ToDateTime(closing, DateTimeKind.Utc);
 
+        // Customer must book at least 30 minutes ahead. "Now" and "today" are both
+        // computed as Belgrade wall-clock values (not DateTime.UtcNow directly) to
+        // stay in the same coordinate space dayStart/dayEnd already use above —
+        // mixing a true UTC instant into that space would shift the cutoff by the
+        // Belgrade UTC offset (+1h/+2h depending on DST). Future dates are untouched.
+        var nowBelgrade = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BelgradeTimeZone);
+        var todayBelgrade = DateOnly.FromDateTime(nowBelgrade);
+        DateTime? earliestBookable = date == todayBelgrade ? nowBelgrade.AddMinutes(30) : null;
+
         var existingReservations = await _db.Reservations
             .IgnoreQueryFilters()
             .Where(r => r.TenantId == tenant.Id &&
@@ -69,6 +82,12 @@ public partial class ReservationsController : ControllerBase
         while (slotStart.AddMinutes(service.DurationMinutes) <= dayEnd)
         {
             var slotEnd = slotStart.AddMinutes(service.DurationMinutes);
+
+            if (earliestBookable is not null && slotStart < earliestBookable)
+            {
+                slotStart = slotEnd;
+                continue;
+            }
 
             var freeBay = bays.FirstOrDefault(bay =>
                 !existingReservations.Any(r =>
