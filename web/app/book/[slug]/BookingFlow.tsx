@@ -3,9 +3,11 @@
 import { useReducer } from "react";
 import { bookingReducer, initialBookingState } from "./bookingReducer";
 import { useServices } from "./useServices";
+import { useAvailability } from "./useAvailability";
 import { STEP_META } from "./stepMeta";
 import { StepStub } from "./StepStub";
 import { CategoryStep } from "./CategoryStep";
+import { DateTimeStep } from "./DateTimeStep";
 import { BookingProgressBar } from "./BookingProgressBar";
 import { SummarySidebar } from "./SummarySidebar";
 import { MobileAccordion } from "./MobileAccordion";
@@ -22,6 +24,11 @@ export default function BookingFlow({ slug }: Props) {
     const [state, dispatch] = useReducer(bookingReducer, initialBookingState);
     const activeMeta = STEP_META.find((m) => m.step === state.step)!;
     const { services, loading, error } = useServices(slug);
+    const {
+        slots: availabilitySlots,
+        loading: availabilityLoading,
+        error: availabilityError,
+    } = useAvailability(slug, state.serviceId, state.date);
 
     return (
         <div className="min-h-screen bg-[var(--wb-bg)]">
@@ -39,6 +46,14 @@ export default function BookingFlow({ slug }: Props) {
                                 error={error}
                                 state={state}
                                 dispatch={dispatch}
+                            />
+                        ) : state.step === 2 ? (
+                            <DateTimeStep
+                                state={state}
+                                dispatch={dispatch}
+                                slots={availabilitySlots}
+                                loading={availabilityLoading}
+                                error={availabilityError}
                             />
                         ) : (
                             <StepStub
@@ -62,6 +77,9 @@ export default function BookingFlow({ slug }: Props) {
                     services={services}
                     loading={loading}
                     error={error}
+                    availabilitySlots={availabilitySlots}
+                    availabilityLoading={availabilityLoading}
+                    availabilityError={availabilityError}
                     state={state}
                     dispatch={dispatch}
                 />

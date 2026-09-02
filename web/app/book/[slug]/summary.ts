@@ -1,13 +1,22 @@
+import { formatDateSr } from "@/lib/date-format";
 import { BookingState, Step } from "./bookingReducer";
+import { parseLocalDateString } from "./DateTimeStep";
 
-// Step 1 is real (D1). Steps 2-4 still hold stub placeholders until their
-// own gates land.
+// Steps 1-2 are real (D1, D2). Steps 3-4 still hold stub placeholders until
+// their own gates land.
 export function stepSummaryLabel(step: Step, state: BookingState): string {
     switch (step) {
         case 1:
             return state.serviceName ? `${state.category} · ${state.serviceName}` : "—";
-        case 2:
-            return state.slot ? "Izabran termin" : "—";
+        case 2: {
+            if (!state.slot) return "—";
+            const time = new Date(state.slot.startsAt).toLocaleTimeString("sr-Latn-RS", {
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+            const date = state.date ? formatDateSr(parseLocalDateString(state.date)) : "";
+            return `${date} · ${time} · ${state.slot.bayName}`;
+        }
         case 3:
             return state.customerName ?? "—";
         case 4:

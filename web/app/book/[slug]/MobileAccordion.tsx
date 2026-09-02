@@ -1,16 +1,20 @@
 "use client";
 
-import { Service } from "@/lib/booking-api";
+import { Service, Timeslot } from "@/lib/booking-api";
 import { BookingAction, BookingState } from "./bookingReducer";
 import { isStepFilled, stepSummaryLabel } from "./summary";
 import { StepStub } from "./StepStub";
 import { CategoryStep } from "./CategoryStep";
+import { DateTimeStep } from "./DateTimeStep";
 import { STEP_META } from "./stepMeta";
 
 interface Props {
     services: Service[];
     loading: boolean;
     error: boolean;
+    availabilitySlots: Timeslot[];
+    availabilityLoading: boolean;
+    availabilityError: boolean;
     state: BookingState;
     dispatch: (action: BookingAction) => void;
 }
@@ -18,7 +22,16 @@ interface Props {
 // Mobile-only vertical accordion. Exactly one step is open (state.step);
 // the rest render as collapsed rows — accent/filled if a value was picked,
 // neutral/muted otherwise. Tapping a filled collapsed row reopens it.
-export function MobileAccordion({ services, loading, error, state, dispatch }: Props) {
+export function MobileAccordion({
+    services,
+    loading,
+    error,
+    availabilitySlots,
+    availabilityLoading,
+    availabilityError,
+    state,
+    dispatch,
+}: Props) {
     return (
         <div className="space-y-3">
             {STEP_META.map((meta) => {
@@ -38,6 +51,14 @@ export function MobileAccordion({ services, loading, error, state, dispatch }: P
                                     error={error}
                                     state={state}
                                     dispatch={dispatch}
+                                />
+                            ) : meta.step === 2 ? (
+                                <DateTimeStep
+                                    state={state}
+                                    dispatch={dispatch}
+                                    slots={availabilitySlots}
+                                    loading={availabilityLoading}
+                                    error={availabilityError}
                                 />
                             ) : (
                                 <StepStub

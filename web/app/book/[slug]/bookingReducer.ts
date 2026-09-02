@@ -2,6 +2,7 @@ export type Step = 1 | 2 | 3 | 4;
 
 export interface BookingSlot {
     bayId: string;
+    bayName: string;
     startsAt: string;
 }
 
@@ -24,12 +25,14 @@ export const initialBookingState: BookingState = { step: 1 };
 export type BookingAction =
     | { type: "SELECT_CATEGORY"; category: string }
     | { type: "SELECT_SERVICE"; serviceId: string; serviceName: string }
+    | { type: "SELECT_DATE"; date: string }
+    | { type: "SELECT_SLOT"; bayId: string; bayName: string; startsAt: string }
     | { type: "ADVANCE" }
     | { type: "BACK" }
     | { type: "JUMP_TO_STEP"; step: Step };
 
-// Gate D placeholder note: steps 2-4 still use the generic ADVANCE stub
-// until their own gates land. Step 1 is real (SELECT_CATEGORY/SELECT_SERVICE).
+// Gate D placeholder note: steps 3-4 still use the generic ADVANCE stub
+// until their own gates land. Steps 1-2 are real.
 export function bookingReducer(state: BookingState, action: BookingAction): BookingState {
     switch (action.type) {
         case "SELECT_CATEGORY": {
@@ -52,9 +55,24 @@ export function bookingReducer(state: BookingState, action: BookingAction): Book
                 slot: undefined,
                 step: 2,
             };
+        case "SELECT_DATE": {
+            // Availability depends on the date, so a changed date invalidates
+            // whatever slot was already picked for the old date.
+            const changingDate = state.date !== undefined && state.date !== action.date;
+            return {
+                ...state,
+                date: action.date,
+                ...(changingDate ? { slot: undefined } : {}),
+            };
+        }
+        case "SELECT_SLOT":
+            return {
+                ...state,
+                slot: { bayId: action.bayId, bayName: action.bayName, startsAt: action.startsAt },
+                step: 3,
+            };
         case "ADVANCE": {
             const next: BookingState = { ...state };
-            if (state.step === 2) next.slot = { bayId: "stub", startsAt: "stub" };
             if (state.step === 3) next.customerName = "stub";
             next.step = (Math.min(4, state.step + 1) as Step);
             return next;
