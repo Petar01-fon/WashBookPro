@@ -11,7 +11,12 @@ interface AvailabilityState {
 // mobile trees stay mounted at once, so this is called once by BookingFlow
 // and the result passed down via props, instead of fetching inside the step
 // component that renders in both trees.
-export function useAvailability(slug: string, serviceId: string | undefined, date: string | undefined): AvailabilityState {
+export function useAvailability(
+    slug: string,
+    serviceId: string | undefined,
+    date: string | undefined,
+    refreshToken: number,
+): AvailabilityState {
     const [slots, setSlots] = useState<Timeslot[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
@@ -40,7 +45,7 @@ export function useAvailability(slug: string, serviceId: string | undefined, dat
         return () => {
             cancelled = true;
         };
-    }, [slug, serviceId, date]);
+    }, [slug, serviceId, date, refreshToken]);
 
     return { slots, loading, error };
 }

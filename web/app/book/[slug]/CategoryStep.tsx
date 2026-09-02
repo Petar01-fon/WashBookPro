@@ -72,6 +72,8 @@ export function CategoryStep({ services, loading, error, state, dispatch }: Prop
                                             type: "SELECT_SERVICE",
                                             serviceId: service.id,
                                             serviceName: service.name,
+                                            durationMinutes: service.durationMinutes,
+                                            priceRsd: service.priceRsd,
                                         })
                                     }
                                     className={[

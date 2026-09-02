@@ -75,6 +75,12 @@ export function DateTimeStep({ state, dispatch, slots, loading, error }: Props) 
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-[var(--wb-fg)]">Datum i vreme</h2>
 
+            {state.slotTakenNotice && (
+                <p className="rounded-xl border border-[var(--wb-error)]/30 bg-[var(--wb-error)]/10 px-4 py-3 text-sm text-[var(--wb-error)]">
+                    {state.slotTakenNotice}
+                </p>
+            )}
+
             <DayPicker
                 mode="single"
                 weekStartsOn={1}

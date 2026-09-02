@@ -31,8 +31,9 @@ export interface CreateReservationPayload {
     customerName: string;
     customerPhone: string;
     customerEmail: string;
-    startsAt: string; 
+    startsAt: string;
     notes?: string;
+    plateNumber?: string;
     tenantSlug: string;
 }
 
@@ -71,6 +72,15 @@ export async function getAvailability(slug: string, date: string, serviceId: str
     return res.json();
 }
 
+// Thrown specifically for 409 (slot taken between availability fetch and submit) so
+// callers can distinguish it from validation/network/server errors via instanceof.
+export class ReservationConflictError extends Error {
+    constructor() {
+        super("The selected time slot is no longer available");
+        this.name = "ReservationConflictError";
+    }
+}
+
 export async function createReservation(payload: CreateReservationPayload): Promise<ReservationResult> {
     const res = await fetch(`${API_URL}/reservations`, {
         method: "POST",
@@ -78,6 +88,7 @@ export async function createReservation(payload: CreateReservationPayload): Prom
         body: JSON.stringify(payload),
     });
 
+    if (res.status === 409) throw new ReservationConflictError();
     if (!res.ok) throw new Error("Failed to create reservation");
     return res.json();
 }

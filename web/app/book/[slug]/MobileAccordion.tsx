@@ -3,13 +3,14 @@
 import { Service, Timeslot } from "@/lib/booking-api";
 import { BookingAction, BookingState } from "./bookingReducer";
 import { isStepFilled, stepSummaryLabel } from "./summary";
-import { StepStub } from "./StepStub";
 import { CategoryStep } from "./CategoryStep";
 import { DateTimeStep } from "./DateTimeStep";
 import { CustomerDetailsStep } from "./CustomerDetailsStep";
+import { ConfirmationStep } from "./ConfirmationStep";
 import { STEP_META } from "./stepMeta";
 
 interface Props {
+    slug: string;
     services: Service[];
     loading: boolean;
     error: boolean;
@@ -22,8 +23,12 @@ interface Props {
 
 // Mobile-only vertical accordion. Exactly one step is open (state.step);
 // the rest render as collapsed rows — accent/filled if a value was picked,
-// neutral/muted otherwise. Tapping a filled collapsed row reopens it.
+// neutral/muted otherwise. Tapping a filled collapsed row reopens it. That tap
+// (JUMP_TO_STEP, below) already doubles as mobile's "Promeni" — the existing
+// downstream-cleanup reducer branches (SELECT_CATEGORY/SELECT_SERVICE/SELECT_DATE)
+// fire naturally once the customer re-selects on the step they jumped back to.
 export function MobileAccordion({
+    slug,
     services,
     loading,
     error,
@@ -64,14 +69,7 @@ export function MobileAccordion({
                             ) : meta.step === 3 ? (
                                 <CustomerDetailsStep state={state} dispatch={dispatch} />
                             ) : (
-                                <StepStub
-                                    title={meta.title}
-                                    description={meta.description}
-                                    showBack={meta.step > 1}
-                                    nextLabel={meta.step === 4 ? "Potvrdi" : "Dalje"}
-                                    onBack={() => dispatch({ type: "BACK" })}
-                                    onAdvance={() => dispatch({ type: "ADVANCE" })}
-                                />
+                                <ConfirmationStep slug={slug} state={state} dispatch={dispatch} />
                             )}
                         </div>
                     );
