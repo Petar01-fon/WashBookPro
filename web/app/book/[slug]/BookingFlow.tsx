@@ -1,13 +1,15 @@
 "use client";
 
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { bookingReducer, initialBookingState } from "./bookingReducer";
 import { useServices } from "./useServices";
 import { useAvailability } from "./useAvailability";
+import { useCustomerPrefill } from "./useCustomerPrefill";
 import { STEP_META } from "./stepMeta";
 import { StepStub } from "./StepStub";
 import { CategoryStep } from "./CategoryStep";
 import { DateTimeStep } from "./DateTimeStep";
+import { CustomerDetailsStep } from "./CustomerDetailsStep";
 import { BookingProgressBar } from "./BookingProgressBar";
 import { SummarySidebar } from "./SummarySidebar";
 import { MobileAccordion } from "./MobileAccordion";
@@ -29,6 +31,17 @@ export default function BookingFlow({ slug }: Props) {
         loading: availabilityLoading,
         error: availabilityError,
     } = useAvailability(slug, state.serviceId, state.date);
+
+    const customerProfile = useCustomerPrefill();
+    useEffect(() => {
+        if (!customerProfile) return;
+        dispatch({
+            type: "PREFILL_CUSTOMER",
+            name: `${customerProfile.firstName} ${customerProfile.lastName}`.trim(),
+            phone: customerProfile.phoneNumber,
+            email: customerProfile.email,
+        });
+    }, [customerProfile]);
 
     return (
         <div className="min-h-screen bg-[var(--wb-bg)]">
@@ -55,6 +68,8 @@ export default function BookingFlow({ slug }: Props) {
                                 loading={availabilityLoading}
                                 error={availabilityError}
                             />
+                        ) : state.step === 3 ? (
+                            <CustomerDetailsStep state={state} dispatch={dispatch} />
                         ) : (
                             <StepStub
                                 title={activeMeta.title}

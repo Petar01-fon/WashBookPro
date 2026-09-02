@@ -22,17 +22,24 @@ export interface BookingState {
 
 export const initialBookingState: BookingState = { step: 1 };
 
+// The five step-3 inputs are homogeneous plain-text controlled fields with no
+// cross-field side effects (unlike category/date, which cascade resets elsewhere) —
+// one generic setter instead of five near-identical actions/reducer cases.
+export type BookingTextField = "customerName" | "customerPhone" | "customerEmail" | "notes" | "plateNumber";
+
 export type BookingAction =
     | { type: "SELECT_CATEGORY"; category: string }
     | { type: "SELECT_SERVICE"; serviceId: string; serviceName: string }
     | { type: "SELECT_DATE"; date: string }
     | { type: "SELECT_SLOT"; bayId: string; bayName: string; startsAt: string }
+    | { type: "SET_FIELD"; field: BookingTextField; value: string }
+    | { type: "PREFILL_CUSTOMER"; name: string; phone: string; email: string }
     | { type: "ADVANCE" }
     | { type: "BACK" }
     | { type: "JUMP_TO_STEP"; step: Step };
 
-// Gate D placeholder note: steps 3-4 still use the generic ADVANCE stub
-// until their own gates land. Steps 1-2 are real.
+// Gate D placeholder note: step 4 still uses the generic ADVANCE stub
+// until its own gate lands. Steps 1-3 are real.
 export function bookingReducer(state: BookingState, action: BookingAction): BookingState {
     switch (action.type) {
         case "SELECT_CATEGORY": {
@@ -71,9 +78,19 @@ export function bookingReducer(state: BookingState, action: BookingAction): Book
                 slot: { bayId: action.bayId, bayName: action.bayName, startsAt: action.startsAt },
                 step: 3,
             };
+        case "SET_FIELD":
+            return { ...state, [action.field]: action.value };
+        case "PREFILL_CUSTOMER":
+            // Only fills currently-empty fields — never overwrites what the
+            // customer already typed, even if this fires after they start editing.
+            return {
+                ...state,
+                customerName: state.customerName ?? action.name,
+                customerPhone: state.customerPhone ?? action.phone,
+                customerEmail: state.customerEmail ?? action.email,
+            };
         case "ADVANCE": {
             const next: BookingState = { ...state };
-            if (state.step === 3) next.customerName = "stub";
             next.step = (Math.min(4, state.step + 1) as Step);
             return next;
         }

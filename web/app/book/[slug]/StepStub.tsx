@@ -28,7 +28,7 @@ export function StepStub({ title, description, showBack, nextLabel, onBack, onAd
                 )}
                 <button
                     onClick={onAdvance}
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-[var(--wb-accent)] hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-[var(--wb-accent)] hover:bg-[var(--wb-accent)]/90 transition-colors"
                 >
                     {nextLabel}
                 </button>

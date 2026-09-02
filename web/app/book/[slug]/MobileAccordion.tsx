@@ -6,6 +6,7 @@ import { isStepFilled, stepSummaryLabel } from "./summary";
 import { StepStub } from "./StepStub";
 import { CategoryStep } from "./CategoryStep";
 import { DateTimeStep } from "./DateTimeStep";
+import { CustomerDetailsStep } from "./CustomerDetailsStep";
 import { STEP_META } from "./stepMeta";
 
 interface Props {
@@ -60,6 +61,8 @@ export function MobileAccordion({
                                     loading={availabilityLoading}
                                     error={availabilityError}
                                 />
+                            ) : meta.step === 3 ? (
+                                <CustomerDetailsStep state={state} dispatch={dispatch} />
                             ) : (
                                 <StepStub
                                     title={meta.title}
@@ -83,7 +86,7 @@ export function MobileAccordion({
                         className={[
                             "w-full flex items-center justify-between rounded-2xl border px-5 py-4 text-left transition-colors",
                             filled
-                                ? "border-[var(--wb-accent)]/40 bg-blue-50 hover:bg-blue-100/70 cursor-pointer"
+                                ? "border-[var(--wb-accent)]/40 bg-[var(--wb-accent)]/10 hover:bg-[var(--wb-accent)]/20 cursor-pointer"
                                 : "border-[var(--wb-border)] bg-[var(--wb-bg)] cursor-default",
                         ].join(" ")}
                     >
