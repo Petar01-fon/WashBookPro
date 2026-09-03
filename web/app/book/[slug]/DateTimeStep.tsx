@@ -120,6 +120,7 @@ export function DateTimeStep({ state, dispatch, slots, loading, error }: Props) 
                                                 bayId: slot.bayId,
                                                 bayName: slot.bayName,
                                                 startsAt: slot.startsAt,
+                                                endsAt: slot.endsAt,
                                             })
                                         }
                                         className={[

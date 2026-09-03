@@ -45,12 +45,18 @@ export function ConfirmationStep({ slug, state, dispatch }: Props) {
                 notes: state.notes || undefined,
             });
 
+            // email is deliberately left out of the URL — it's PII that would
+            // otherwise sit in browser history, server logs, and the Referer header,
+            // and travel along if the customer forwards the link. The success page
+            // says a confirmation was sent, without repeating the address.
             const params = new URLSearchParams({
                 name: state.customerName ?? "",
                 service: state.serviceName ?? "",
                 startsAt: state.slot.startsAt,
-                email: state.customerEmail ?? "",
+                endsAt: state.slot.endsAt,
+                price: String(state.servicePriceRsd ?? 0),
             });
+            if (state.plateNumber) params.set("plate", state.plateNumber);
             router.push(`/book/${slug}/success?${params.toString()}`);
         } catch (err) {
             if (err instanceof ReservationConflictError) {

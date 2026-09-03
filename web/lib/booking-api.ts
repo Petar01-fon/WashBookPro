@@ -5,6 +5,7 @@ export interface TenantInfo {
     name: string;
     slug: string;
     address: string | null;
+    phone: string | null;
     openingTime: string | null;
     closingTime: string | null;
 }

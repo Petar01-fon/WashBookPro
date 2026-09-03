@@ -4,6 +4,7 @@ export interface BookingSlot {
     bayId: string;
     bayName: string;
     startsAt: string;
+    endsAt: string;
 }
 
 export interface BookingState {
@@ -40,7 +41,7 @@ export type BookingAction =
     | { type: "SELECT_CATEGORY"; category: string }
     | { type: "SELECT_SERVICE"; serviceId: string; serviceName: string; durationMinutes: number; priceRsd: number }
     | { type: "SELECT_DATE"; date: string }
-    | { type: "SELECT_SLOT"; bayId: string; bayName: string; startsAt: string }
+    | { type: "SELECT_SLOT"; bayId: string; bayName: string; startsAt: string; endsAt: string }
     | { type: "SET_FIELD"; field: BookingTextField; value: string }
     | { type: "PREFILL_CUSTOMER"; name: string; phone: string; email: string }
     | { type: "SLOT_TAKEN" }
@@ -95,7 +96,7 @@ export function bookingReducer(state: BookingState, action: BookingAction): Book
         case "SELECT_SLOT":
             return {
                 ...state,
-                slot: { bayId: action.bayId, bayName: action.bayName, startsAt: action.startsAt },
+                slot: { bayId: action.bayId, bayName: action.bayName, startsAt: action.startsAt, endsAt: action.endsAt },
                 slotTakenNotice: undefined,
                 step: 3,
             };
