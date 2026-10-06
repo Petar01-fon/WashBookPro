@@ -11,37 +11,6 @@ namespace WashBookPro.Api.Modules.Auth.Services;
 
 public class AuthService(AppDbContext db, IConfiguration config) : IAuthService
 {
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
-    {
-        var exists = await db.Users
-            .IgnoreQueryFilters()
-            .AnyAsync(u => u.TenantId == request.TenantId && u.Email == request.Email);
-
-        if (exists)
-            throw new InvalidOperationException("Email already registered for this tenant.");
-
-        var refreshToken = Guid.NewGuid().ToString();
-        var refreshExpiresAt = DateTimeOffset.UtcNow.AddDays(7);
-
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            TenantId = request.TenantId,
-            Email = request.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = request.Role,
-            RefreshToken = refreshToken,
-            RefreshTokenExpiresAt = refreshExpiresAt,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
-
-        var (accessToken, expiresAt) = GenerateAccessToken(user);
-        return new AuthResponse(accessToken, refreshToken, expiresAt, string.Empty);
-    }
-
   public async Task<AuthResponse> LoginAsync(LoginRequest request)
 {
     var user = await db.Users

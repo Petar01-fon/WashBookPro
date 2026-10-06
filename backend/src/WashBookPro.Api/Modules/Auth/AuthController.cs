@@ -8,20 +8,6 @@ namespace WashBookPro.Api.Modules.Auth;
 [Route("auth")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
-    [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest request)
-    {
-        try
-        {
-            var response = await authService.RegisterAsync(request);
-            return Ok(response);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { error = ex.Message });
-        }
-    }
-
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
