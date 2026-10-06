@@ -237,11 +237,11 @@ Očekivano: #1 404 "Service not found", #2 404 "Bay not found", #3/#4 404 (ako j
 ## Gate 4 — dokumentacija
 
 1. Predloži ažuriranje `docs/PROJECT_STATE.md`:
-   - zaglavlje: P0–P2 završeni, sledeći P3 (čeka Petrov nalog)
+   - zaglavlje: P0–P2 završeni, sledeći je ADR za pravac proizvoda, pa T1 (čeka Petrov nalog)
    - sekcija P2: ZAVRŠEN, commit-i po gate-ovima, rezultati Gate 0
    - "Sledeće" premesti na kraj sekcije P2
-   - u P4 dodaj ADR kandidata: "Kreiranje rezervacije: 404 za nepostojeću/neaktivnu uslugu ili boks,
-     409 samo za zauzet termin; odgovor sadrži `emailSent`"
+   - u sekciju "ADR dug" dodaj ADR kandidata: "Kreiranje rezervacije: 404 za nepostojeću/neaktivnu
+     uslugu ili boks, 409 samo za zauzet termin; odgovor sadrži `emailSent`"
    - napomena: walk-in UI ignoriše `emailSent` (kandidat za kasnije)
 2. `CLAUDE.md` se menja samo ako je nešto iz P2 postalo trajno pravilo — predloži, ne menjaj sam.
    (`CLAUDE.md` je na engleskom.)
@@ -254,4 +254,5 @@ Očekivano: #1 404 "Service not found", #2 404 "Bay not found", #3/#4 404 (ako j
 
 ## Posle P2
 
-Ne počinji P3 bez Petrovog naloga.
+Sledi ADR za pravac proizvoda, pa T1 (test projekat) — vidi M1 u `docs/PROJECT_STATE.md`.
+Ne počinji ništa od toga bez Petrovog naloga.

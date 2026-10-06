@@ -2,12 +2,40 @@
 
 **Poslednje ažuriranje:** 2026-10-06
 **Aktivan developer:** Solo (Petar Bogdanović)
-**Trenutna faza:** Faza 1 — sanacija (plan P0–P5), P0 i P1 završeni; sledeći je P2 (čeka Petrov nalog)
+**Trenutna faza:** Faza 1 — temelj (M1). P0 i P1 završeni; P2 u toku
 
 > Za istoriju implementiranih funkcionalnosti videti `docs/ROADMAP.md`.
 > Ovaj dokument fokusira se na **trenutno stanje i sledeće korake**.
 > Pravila rada su u `CLAUDE.md`. Od 2026-10-06 planiranje i implementacija se
 > rade direktno u Claude Code-u (bez posredničkog chata).
+
+---
+
+## Pravac proizvoda (odlučeno 2026-10-06)
+
+**Cilj do sezone (proleće 2027):** prijateljeva perionica radi svaki dan na
+WashBook-u u produkciji, uz pilot sa jednom firmom koja ima flotu.
+
+| Tema | Odluka |
+|---|---|
+| Strateški pravac | Hibrid: jedna perionica (SaaS) + jedna flota (B2B) kao pilot |
+| Prvi cilj | Prijatelj koristi sistem svakodnevno; onboarding novih tenanta posle sezone |
+| Rok | Produkcija do proleća 2027; prijatelj počinje najkasnije 4–6 nedelja pre sezone |
+| Pretplata tenanta | Fiksna mesečna, cena zavisi od broja boksova; ANPR kao doplata |
+| ANPR | Spike posle P2, paralelno sa ostalim radom; postojeće IP kamere (RTSP) |
+| ANPR nepoklapanje | v1: log + dnevni izveštaj u dashboardu; real-time alarm u v2 |
+| Walk-in udeo | Oko 50% — terminal i booking flow su podjednako važni |
+| Kategorije vozila | Definiše ih vlasnik (tabela po tenantu umesto slobodnih stringova) |
+| Radno vreme | Po danima u nedelji + neradni dani/praznici + blokada boksa |
+| Naplata u perionici | Snapshot cene na rezervaciji + način plaćanja + dnevni presek kase |
+| Flote | Evidencija pranja po firmi/vozilu → mesečna specifikacija (PDF/Excel) → paketi → SEF API |
+| Testovi | xUnit + Testcontainers (Postgres), posle P2 i ADR-a za pravac (korak T1) |
+| Sanacija P3–P5 | Ne rade se kao posebne faze, nego uz feature na koji se odnose |
+| Mobilna app | Odložena; responsive web + PWA |
+| Hosting | Hetzner VPS + Docker Compose |
+
+Pravac se beleži u posebnom ADR-u odmah posle P2 (vidi M1). Ostale odluke idu u
+ADR-ove uz feature na koji se odnose (vidi "ADR dug").
 
 ---
 
@@ -33,7 +61,71 @@ Aktivan tenant za razvoj: **dev-wash** (ID: `80b059d6-c10f-47a6-8296-797009d5aa3
 
 ---
 
-## Plan sanacije P0–P5
+## Milestone-i do sezone
+
+### M1 — Temelj (oktobar–novembar 2026) ← AKTIVAN
+
+Redosled:
+
+1. **P2 — Result tip i email signal.** Odobren plan: `docs/P2-PLAN.md`.
+2. **ADR za pravac proizvoda.** Poseban zadatak odmah posle P2, pre T1. Beleži
+   odluke iz sekcije "Pravac proizvoda" (hibrid, pretplata, milestone-i, odloženo).
+3. **T1 — test projekat.** `backend/tests/WashBookPro.Api.Tests` (xUnit +
+   Testcontainers/Postgres). Prvo testovi za availability (prozori po boksu,
+   ±15 min buffer, same-day cutoff) i konflikte (409). Uvodi novu strukturu i
+   zavisnosti → poseban plan i odobrenje.
+4. **Minimalan produkcioni deploy** (kraj M1 ili početak M2). Hetzner VPS +
+   Docker Compose, HTTPS, domen (`washbook.rs` ili `washbook.app`). Cilj: javni URL
+   rano, da se deploy problemi otkriju pre M3. Stvrdnjavanje je u M3.
+
+Paralelno, posle P2:
+
+- **ANPR spike (u `anpr-edge/`).** Jedan RTSP stream → PlateRecognizer → event na
+  backend → prikaz na terminalu. Ne dira booking kod. ADR se piše tokom spike-a.
+  Pre početka proveriti na terenu: model kamera, pristup RTSP-u, ugao i osvetljenje ulaza.
+  **Paralelno znači po rasporedu, ne istovremeno u istom radnom stablu:** dve
+  Claude Code sesije se nikad ne izvršavaju istovremeno u istom radnom stablu
+  (`D:\WashBook\WashBookPro`). Ako spike i drugi zadatak treba da teku u isto vreme,
+  to zahteva poseban dogovor (npr. git worktree) pre početka.
+
+### M2 — Perionica spremna za svakodnevni rad (novembar 2026 – januar 2027)
+
+- Kategorije vozila koje definiše vlasnik (migracija postojećih `VehicleCategory`/`ServiceType` stringova)
+- Radno vreme po danima u nedelji, neradni dani, blokada boksa — uključuje **P5**
+  (zauzetost boksa kao stvarno praćenje vremena početka)
+- `Reservation` čuva cenu u trenutku kreiranja (danas se cena čita iz `Service`,
+  pa promena cenovnika menja istoriju i statistiku)
+- Terminal: evidencija naplate (keš/kartica, iznos) i dnevni presek kase za vlasnika
+- Brži walk-in unos na terminalu
+- Usput: **P3** (ostatak formatiranja datuma) kad se diraju ti fajlovi;
+  UI nalazi B i C iz "Otvoreni nalazi iz P1"
+
+### M3 — Stvrdnjavanje produkcije (januar – februar 2027)
+
+- Automatski backup baze i provera vraćanja iz backup-a
+- Resend: verifikovan domen (SPF/DKIM), test isporuke na neregistrovane adrese
+- Produkcijska konfiguracija i tajne odvojene od dev-a; osnovni monitoring i logovi
+- PWA manifest za terminal i booking
+- NU1903 (`Microsoft.OpenApi`) rešen pre početka rada prijatelja
+- **Prijatelj počinje svakodnevni rad**
+
+### M4 — Flota pilot + ANPR v1 (februar – april 2027)
+
+- Firma i njena vozila u sistemu; pranja vezana za firmu; mesečna specifikacija (PDF/Excel)
+- ANPR v1 u produkciji: upoređivanje tablica sa rezervacijama i walk-in unosima,
+  izveštaj o nepoklapanjima u dashboardu
+
+**Rizik:** M4 je preopterećen za jednog developera. Ako kasni, flota se pomera
+posle sezone (može početi sa ručnom specifikacijom), a ANPR v1 ostaje.
+
+### Posle sezone
+
+Real-time ANPR alarm, paketi pranja za flote, SEF (eFaktura) API integracija,
+onboarding novih tenanta, naplata pretplate.
+
+---
+
+## Sanacija
 
 ### P0 — korektnost zavisna od okruženja (ZAVRŠEN 2026-10-06)
 
@@ -86,30 +178,33 @@ Commit-i po gate-ovima:
 
 Backup pre reseta (`p1_backup.dump`) ostaje u scratchpad-u i ne vraća se automatski.
 
-**Sledeće:** P2 — Result tip i email signal (ne počinje bez Petrovog naloga).
+**Sledeće:** P2 — Result tip i email signal (ne počinje bez Petrovog naloga), zatim ADR za pravac proizvoda, pa T1.
 
 ### P2 — Result tip i email signal
 
 Odobren plan je u `docs/P2-PLAN.md` (izvršava se gate po gate; fajl se briše kad se P2 završi).
 
-### P3 — konsolidacija formatiranja datuma (ostatak)
+### P3, P4, P5 — rade se uz feature rad
 
-Zona je rešena u `fe93b3e` (P0.3/P0.4): `formatTimeSr`, `belgradeDateString`,
-`belgradeTimeString` i `belgradeWallTimeToUtcIso` u `web/lib/date-format.ts`.
-Ostaje:
-- inline `toLocaleDateString("sr-Latn-RS", …)` umesto `formatDateSr` u
-  `ReservationsView.tsx`, `StatsView.tsx` i `TerminalView.tsx`
+- **P3** — konsolidacija formatiranja datuma (ostatak). Zona je rešena u `fe93b3e`
+  (P0.3/P0.4): `formatTimeSr`, `belgradeDateString`, `belgradeTimeString` i
+  `belgradeWallTimeToUtcIso` u `web/lib/date-format.ts`. Ostaje inline
+  `toLocaleDateString("sr-Latn-RS", …)` umesto `formatDateSr` u `ReservationsView.tsx`,
+  `StatsView.tsx` i `TerminalView.tsx` — radi se u M2, kad se diraju ti fajlovi.
+- **P4** — ADR dokumentacija. Vidi sekciju "ADR dug"; ADR se piše uz feature na koji se odnosi.
+- **P5** — zauzetost boksa kao stvarno praćenje vremena početka. Radi se u M2, zajedno
+  sa radnim vremenom i blokadom boksa.
 
-### P4 — ADR dokumentacija
+### ADR dug
 
-Uključuje ADR-026 (booking redesign) — pominjan u planiranju, ali **još nije
-napisan** (u `docs/decisions/` postoje samo ADR-001 do ADR-025).
+U `docs/decisions/` postoje ADR-001 do ADR-025.
 
-ADR kandidati iz P0:
-- "API ugovor: `startsAt` mora sadržati zonu; vrednost bez zone → 400"
-- "Staff registracija uklonjena do Faze 3 onboardinga"
-
-### P5 — zauzetost boksa kao stvarno praćenje vremena početka
+- ADR-026 — booking redesign (pominjan u planiranju, **još nije napisan**)
+- "API ugovor: `startsAt` mora sadržati zonu; vrednost bez zone → 400" (iz P0)
+- "Staff registracija uklonjena do onboardinga" (iz P0)
+- Pravac proizvoda — poseban zadatak u M1, odmah posle P2
+- Uz feature: ANPR arhitektura (tokom spike-a), kategorije po tenantu, model radnog
+  vremena, snapshot cene i naplata, test strategija (T1), hosting i deploy
 
 ---
 
@@ -151,36 +246,19 @@ Nije pokriveno uživo: worker nalog, anonimni posetilac na terminalu i dashboard
 
 ---
 
-## Sledeće (posle sanacije)
-
-### ANPR spike — medium, visoka neizvesnost
-
-Validacija da PlateRecognizer API radi sa stvarnim kamerama u prijateljevoj
-perionici. Cilj: jedna detektovana tablica → event na backend → prikaz na
-terminalu. ADR piše se tokom spike-a.
-
-**Zašto prioritet:** ANPR je primarni tehnički diferencijator. Dok god nije
-potvrđen u realnom okruženju, B2B i fleet feature mogu biti buildani na
-pogrešnoj pretpostavci.
-
-### Onboarding 2-3 nepoznatih tenanta — non-tech, high impact
-
-Onboarding vlasnika perionica bez tehničkog iskustva otkriće friction u
-signup procesu i booking flowu koji dev-wash ne može da pokrije.
-
-**Zašto prioritet:** Jedan aktivan tenant nije market fit validacija.
-
----
-
 ## Otvorena pitanja
 
-**B2B fleet vs. many small tenants** — Platforma može ići ka intenzivnoj
-akviziciji malih perionica (niži ARPU, brže zatvaranje) ili ka B2B fleet
-managementu za kompanije sa flotama (visok ARPU, duži ciklus prodaje). Odluka
-utiče na prioritizaciju B2B portala, eFaktura integracije i fleet ANPR feature-a.
-Nije donesena.
+**Fakturisanje flote** — treba potvrditi sa knjigovođom perionice da li je
+perionica u PDV sistemu i kako izdaje B2B fakture (SEF). Odgovor određuje da li je
+mesečna specifikacija dovoljna za pilot. Rok: pre M4.
 
-**Resend production setup** — Trenutna konfiguracija šalje sa development naloga.
+**Ko plaća ANPR hardver i PlateRecognizer API** — perionica, WashBook ili je
+uračunato u ANPR doplatu? Utiče na cenu paketa. Rok: pre ANPR v1.
+
+**Cenovnik pretplate** — iznos po broju boksova i ANPR doplata nisu definisani.
+Ne blokira razvoj do M3.
+
+**Resend production setup** (rešava se u M3) — Trenutna konfiguracija šalje sa development naloga.
 Poznati problemi:
 - emailovi potvrde završavaju u spamu — potrebna SPF/DKIM verifikacija domena
 - Resend free plan bez verifikovanog domena šalje samo na adresu vlasnika naloga
@@ -193,12 +271,15 @@ realni tenant.
 
 ## Deferred (i zašto)
 
-- **Mobilna app (Expo)** — čeka stabilan web booking flow; mobile i web moraju
-  biti konzistentni.
+- **Mobilna app (Expo)** — odlučeno 2026-10-06: responsive web + PWA do kraja sezone.
+  Expo tek kad postoji konkretan razlog (push notifikacije, kamera, prisustvo u store-u).
 - **SMS/Viber (Infobip)** — čeka eksplicitnu potražnju plaćajućeg tenanta.
-- **B2B portal** — čeka razrešenje otvorenog pitanja pravca (videti gore).
+- **B2B portal (puni)** — pilot sa jednom flotom u M4; portal za samostalno
+  korišćenje od strane firme posle sezone.
+- **Onboarding novih tenanta** — posle sezone; prvo jedan tenant u svakodnevnom radu.
+  (Onboarding vlasnika bez tehničkog iskustva otkriće friction koji dev-wash ne pokriva.)
 - **Faza 3+** — SuperAdmin dashboard, self-service onboarding, online plaćanja,
-  subscription billing, produkcioni domen (`washbook.rs` ili `washbook.app`).
+  subscription billing, SEF API.
 
 ---
 
