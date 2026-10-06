@@ -2,7 +2,7 @@
 
 **Poslednje ažuriranje:** 2026-10-06
 **Aktivan developer:** Solo (Petar Bogdanović)
-**Trenutna faza:** Faza 1 — temelj (M1). P0 i P1 završeni; P2 u toku
+**Trenutna faza:** Faza 1 — temelj (M1). P0–P2 završeni; sledeći je ADR za pravac proizvoda, pa T1 (čeka Petrov nalog)
 
 > Za istoriju implementiranih funkcionalnosti videti `docs/ROADMAP.md`.
 > Ovaj dokument fokusira se na **trenutno stanje i sledeće korake**.
@@ -67,7 +67,7 @@ Aktivan tenant za razvoj: **dev-wash** (ID: `80b059d6-c10f-47a6-8296-797009d5aa3
 
 Redosled:
 
-1. **P2 — Result tip i email signal.** Odobren plan: `docs/P2-PLAN.md`.
+1. **P2 — Result tip i email signal (ZAVRŠEN).**
 2. **ADR za pravac proizvoda.** Poseban zadatak odmah posle P2, pre T1. Beleži
    odluke iz sekcije "Pravac proizvoda" (hibrid, pretplata, milestone-i, odloženo).
 3. **T1 — test projekat.** `backend/tests/WashBookPro.Api.Tests` (xUnit +
@@ -178,11 +178,31 @@ Commit-i po gate-ovima:
 
 Backup pre reseta (`p1_backup.dump`) ostaje u scratchpad-u i ne vraća se automatski.
 
-**Sledeće:** P2 — Result tip i email signal (ne počinje bez Petrovog naloga), zatim ADR za pravac proizvoda, pa T1.
+### P2 — Result tip i email signal (ZAVRŠEN 2026-10-06)
 
-### P2 — Result tip i email signal
+Cilj: svaki ishod kreiranja rezervacije ima svoj HTTP odgovor, i odgovor kaže da li je potvrda emailom prihvaćena.
 
-Odobren plan je u `docs/P2-PLAN.md` (izvršava se gate po gate; fajl se briše kad se P2 završi).
+Rezultati Gate 0 (empirijska provera, Docker :8080, pravi HTTP, test podaci obrisani posle provere):
+- nepostojeća usluga → 409 (bag, očekivano 404)
+- nepostojeći boks → 409 (bag, očekivano 404)
+- neaktivan boks → 201 (bag: kreiranje nije proveravalo `IsActive`)
+- neaktivna usluga → 201 (bag: isto)
+- stvarni konflikt → 409 (ispravno)
+- email na `example.com` → 201, Resend 422 u logu; telo odgovora bez informacije o emailu
+- `GET /availability` za neaktivnu uslugu → 200 sa slotovima (bag)
+- walk-in sa nepostojećom uslugom → 409 (bag, očekivano 404)
+
+Commit-i po gate-ovima:
+- Gate 1 — Result tip, 404 za nepostojeće/neaktivne usluge i boks, `IsActive` u availability-ju: `9bb3e59`
+- Gate 2 — `emailSent` u odgovoru `POST /reservations` i walk-in: `1f5039b`
+- Gate 3 — iskren status emaila na success stranici: `388c954`
+- Gate 4 — zatvaranje P2 i ažuriranje dokumentacije: ovaj commit (`docs: close P2 and update project state`)
+
+Otvoreno iz P2:
+- Walk-in UI (`WalkInDialog`) ignoriše `emailSent` — namerno, van plana; kandidat za kasnije.
+- Panel "Pregled rezervacije" na booking flow-u prikazuje `undefined · …` u redu "Kategorija" (viđeno u Gate 3 browser testu, nije dijagnostikovano ni popravljeno).
+
+**Sledeće:** ADR za pravac proizvoda, pa T1 (čeka Petrov nalog).
 
 ### P3, P4, P5 — rade se uz feature rad
 
@@ -202,6 +222,7 @@ U `docs/decisions/` postoje ADR-001 do ADR-025.
 - ADR-026 — booking redesign (pominjan u planiranju, **još nije napisan**)
 - "API ugovor: `startsAt` mora sadržati zonu; vrednost bez zone → 400" (iz P0)
 - "Staff registracija uklonjena do onboardinga" (iz P0)
+- "Kreiranje rezervacije: 404 za nepostojeću/neaktivnu uslugu ili boks, 409 samo za zauzet termin; odgovor sadrži `emailSent`" (iz P2)
 - Pravac proizvoda — poseban zadatak u M1, odmah posle P2
 - Uz feature: ANPR arhitektura (tokom spike-a), kategorije po tenantu, model radnog
   vremena, snapshot cene i naplata, test strategija (T1), hosting i deploy
