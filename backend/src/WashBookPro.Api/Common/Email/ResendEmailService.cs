@@ -36,7 +36,7 @@ public class ResendEmailService : IEmailService
         _logger = logger;
     }
 
-    public async Task SendBookingConfirmationAsync(
+    public async Task<bool> SendBookingConfirmationAsync(
         BookingConfirmationEmail email,
         CancellationToken cancellationToken = default)
     {
@@ -58,11 +58,14 @@ public class ResendEmailService : IEmailService
             {
                 var error = await response.Content.ReadAsStringAsync(cancellationToken);
                 _logger.LogWarning("Resend API returned {StatusCode}: {Error}", response.StatusCode, error);
+                return false;
             }
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send booking confirmation email to {Email}", email.ToEmail);
+            return false;
         }
     }
 

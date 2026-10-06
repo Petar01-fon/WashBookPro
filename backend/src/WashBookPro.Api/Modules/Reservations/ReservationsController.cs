@@ -341,7 +341,8 @@ public partial class ReservationsController : ControllerBase
 
     private sealed record CreateReservationResult(
         CreateReservationOutcome Outcome,
-        Reservation? Reservation = null);
+        Reservation? Reservation = null,
+        bool EmailSent = false);
 
     // One place that maps a creation outcome to HTTP. Reservation is non-null for
     // Created by construction in CreateReservationCoreAsync, hence the `!`.
@@ -350,7 +351,7 @@ public partial class ReservationsController : ControllerBase
         CreateReservationOutcome.ServiceNotFound => NotFound("Service not found"),
         CreateReservationOutcome.BayNotFound => NotFound("Bay not found"),
         CreateReservationOutcome.SlotTaken => Conflict("The selected time slot is no longer available"),
-        CreateReservationOutcome.Created => StatusCode(201, new { id = result.Reservation!.Id, status = (int)result.Reservation.Status }),
+        CreateReservationOutcome.Created => StatusCode(201, new { id = result.Reservation!.Id, status = (int)result.Reservation.Status, emailSent = result.EmailSent }),
         _ => throw new InvalidOperationException($"Unhandled outcome {result.Outcome}"),
     };
 
@@ -424,6 +425,7 @@ public partial class ReservationsController : ControllerBase
         _db.Reservations.Add(reservation);
         await _db.SaveChangesAsync();
 
+        var emailSent = false;
         try
         {
             // startsAt is a genuine UTC instant (see the GetAvailability comment on
@@ -447,7 +449,7 @@ public partial class ReservationsController : ControllerBase
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(t => t.Id == tenantId);
 
-            await _emailService.SendBookingConfirmationAsync(new BookingConfirmationEmail(
+            emailSent = await _emailService.SendBookingConfirmationAsync(new BookingConfirmationEmail(
                 ToEmail: customerEmail,
                 CustomerName: customerName,
                 ServiceName: service.Name,
@@ -463,7 +465,7 @@ public partial class ReservationsController : ControllerBase
             _logger.LogError(ex, "Failed to send booking confirmation email for reservation {ReservationId}", reservation.Id);
         }
 
-        return new CreateReservationResult(CreateReservationOutcome.Created, reservation);
+        return new CreateReservationResult(CreateReservationOutcome.Created, reservation, emailSent);
     }
 
     // GET /reservations

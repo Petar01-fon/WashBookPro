@@ -18,7 +18,8 @@ public record BookingConfirmationEmail(
 
 public interface IEmailService
 {
-    Task SendBookingConfirmationAsync(
+    // true = Resend je prihvatio poruku (2xx); ne znači da je isporučena.
+    Task<bool> SendBookingConfirmationAsync(
         BookingConfirmationEmail email,
         CancellationToken cancellationToken = default);
 }
