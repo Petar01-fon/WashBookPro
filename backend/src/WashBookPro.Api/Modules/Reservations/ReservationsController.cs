@@ -428,7 +428,7 @@ public partial class ReservationsController : ControllerBase
 
     // GET /reservations
     [HttpGet("/reservations")]
-    [Authorize]
+    [Authorize(Roles = "Worker,Owner")]
     public async Task<IActionResult> GetReservations([FromQuery] DateOnly date)
     {
         var dayStart = date.ToDateTime(new TimeOnly(0, 0), DateTimeKind.Utc);
@@ -459,10 +459,14 @@ public partial class ReservationsController : ControllerBase
 
     // PATCH /reservations/{id}/status
     [HttpPatch("/reservations/{id}/status")]
-    [Authorize]
+    [Authorize(Roles = "Worker,Owner")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest request)
     {
-        var reservation = await _db.Reservations.FindAsync(id);
+        var tenantId = _tenantContext.TenantId;
+        if (tenantId is null) return Unauthorized();
+
+        var reservation = await _db.Reservations
+            .FirstOrDefaultAsync(r => r.Id == id && r.TenantId == tenantId);
         if (reservation is null)
             return NotFound();
 
@@ -476,10 +480,14 @@ public partial class ReservationsController : ControllerBase
 
     // DELETE /reservations/{id}
     [HttpDelete("/reservations/{id}")]
-    [Authorize]
+    [Authorize(Roles = "Worker,Owner")]
     public async Task<IActionResult> CancelReservation(Guid id)
     {
-        var reservation = await _db.Reservations.FindAsync(id);
+        var tenantId = _tenantContext.TenantId;
+        if (tenantId is null) return Unauthorized();
+
+        var reservation = await _db.Reservations
+            .FirstOrDefaultAsync(r => r.Id == id && r.TenantId == tenantId);
         if (reservation is null)
             return NotFound();
 
