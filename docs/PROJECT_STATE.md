@@ -90,6 +90,8 @@ Backup pre reseta (`p1_backup.dump`) ostaje u scratchpad-u i ne vraća se automa
 
 ### P2 — Result tip i email signal
 
+Odobren plan je u `docs/P2-PLAN.md` (izvršava se gate po gate; fajl se briše kad se P2 završi).
+
 ### P3 — konsolidacija formatiranja datuma (ostatak)
 
 Zona je rešena u `fe93b3e` (P0.3/P0.4): `formatTimeSr`, `belgradeDateString`,
