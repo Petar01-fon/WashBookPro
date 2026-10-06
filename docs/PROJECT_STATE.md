@@ -78,6 +78,7 @@ Provereno: `ReservationTable.tsx` i `summary.ts` prošli su samo `tsc --noEmit` 
 ### P1 — determinizam dev okruženja
 
 GUID seeding (`ReservationSeed.cs` koristi `Guid.NewGuid()`), null render fix.
+Odobren plan je u `docs/P1-PLAN.md` (izvršava se gate po gate; fajl se briše kad se P1 završi).
 
 ### P2 — Result tip i email signal
 
