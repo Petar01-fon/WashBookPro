@@ -48,7 +48,7 @@ public partial class ReservationsController : ControllerBase
 
         var service = await _db.Services
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(s => s.Id == serviceId && s.TenantId == tenant.Id);
+            .FirstOrDefaultAsync(s => s.Id == serviceId && s.TenantId == tenant.Id && s.IsActive);
 
         if (service == null)
             return NotFound("Service not found");
@@ -294,7 +294,7 @@ public partial class ReservationsController : ControllerBase
             ? null
             : request.PlateNumber.Trim().ToUpperInvariant();
 
-        var reservation = await CreateReservationCoreAsync(
+        var result = await CreateReservationCoreAsync(
             tenantId: tenant.Id,
             serviceId: request.ServiceId,
             bayId: request.BayId,
@@ -307,8 +307,7 @@ public partial class ReservationsController : ControllerBase
             status: ReservationStatus.Pending,
             createdBy: ReservationCreatedBy.Customer);
 
-        if (reservation is null) return Conflict("The selected time slot is no longer available");
-        return StatusCode(201, new { id = reservation.Id, status = (int)reservation.Status });
+        return ToCreateReservationResponse(result);
     }
 
     // POST /reservations/walk-in — authorized, worker/owner terminal
@@ -322,7 +321,7 @@ public partial class ReservationsController : ControllerBase
         if (!TryNormalizeToUtc(request.StartsAt, out var startsAtUtc))
             return BadRequest("startsAt must include a timezone offset (e.g. \"2026-12-15T08:00:00Z\")");
 
-        var reservation = await CreateReservationCoreAsync(
+        var result = await CreateReservationCoreAsync(
             tenantId: tenantId.Value,
             serviceId: request.ServiceId,
             bayId: request.BayId,
@@ -335,11 +334,27 @@ public partial class ReservationsController : ControllerBase
             status: ReservationStatus.Confirmed,
             createdBy: ReservationCreatedBy.Worker);
 
-        if (reservation is null) return Conflict("The selected time slot is no longer available");
-        return StatusCode(201, new { id = reservation.Id, status = (int)reservation.Status });
+        return ToCreateReservationResponse(result);
     }
 
-    private async Task<Reservation?> CreateReservationCoreAsync(
+    private enum CreateReservationOutcome { Created, ServiceNotFound, BayNotFound, SlotTaken }
+
+    private sealed record CreateReservationResult(
+        CreateReservationOutcome Outcome,
+        Reservation? Reservation = null);
+
+    // One place that maps a creation outcome to HTTP. Reservation is non-null for
+    // Created by construction in CreateReservationCoreAsync, hence the `!`.
+    private IActionResult ToCreateReservationResponse(CreateReservationResult result) => result.Outcome switch
+    {
+        CreateReservationOutcome.ServiceNotFound => NotFound("Service not found"),
+        CreateReservationOutcome.BayNotFound => NotFound("Bay not found"),
+        CreateReservationOutcome.SlotTaken => Conflict("The selected time slot is no longer available"),
+        CreateReservationOutcome.Created => StatusCode(201, new { id = result.Reservation!.Id, status = (int)result.Reservation.Status }),
+        _ => throw new InvalidOperationException($"Unhandled outcome {result.Outcome}"),
+    };
+
+    private async Task<CreateReservationResult> CreateReservationCoreAsync(
         Guid tenantId,
         Guid serviceId,
         Guid bayId,
@@ -354,13 +369,13 @@ public partial class ReservationsController : ControllerBase
     {
         var service = await _db.Services
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(s => s.Id == serviceId && s.TenantId == tenantId);
-        if (service == null) return null;
+            .FirstOrDefaultAsync(s => s.Id == serviceId && s.TenantId == tenantId && s.IsActive);
+        if (service == null) return new CreateReservationResult(CreateReservationOutcome.ServiceNotFound);
 
         var bay = await _db.Bays
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(b => b.Id == bayId && b.TenantId == tenantId);
-        if (bay == null) return null;
+            .FirstOrDefaultAsync(b => b.Id == bayId && b.TenantId == tenantId && b.IsActive);
+        if (bay == null) return new CreateReservationResult(CreateReservationOutcome.BayNotFound);
 
         var endsAt = startsAt.AddMinutes(service.DurationMinutes);
 
@@ -371,7 +386,7 @@ public partial class ReservationsController : ControllerBase
                 r.Status != ReservationStatus.Cancelled &&
                 r.StartsAt < endsAt &&
                 r.EndsAt > startsAt);
-        if (conflict) return null;
+        if (conflict) return new CreateReservationResult(CreateReservationOutcome.SlotTaken);
 
         var customer = await _db.Customers
             .IgnoreQueryFilters()
@@ -448,7 +463,7 @@ public partial class ReservationsController : ControllerBase
             _logger.LogError(ex, "Failed to send booking confirmation email for reservation {ReservationId}", reservation.Id);
         }
 
-        return reservation;
+        return new CreateReservationResult(CreateReservationOutcome.Created, reservation);
     }
 
     // GET /reservations
