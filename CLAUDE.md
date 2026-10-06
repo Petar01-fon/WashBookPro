@@ -144,11 +144,10 @@ These exist because earlier agent sessions failed in exactly these ways.
 
 - `FindAsync` ignores `IgnoreQueryFilters()` — always use `FirstOrDefaultAsync`.
 - Connection string key is `"Default"`, not `"DefaultConnection"`.
-- `ReservationSeed.cs` uses `Guid.NewGuid()` — Service and Bay IDs change after
-  every `docker compose down -v`. Never hardcode them; query them.
+- Dev seed IDs are fixed and survive `docker compose down -v`: services in
+  `ReservationSeed.cs` (`5e000000-0000-4000-8000-00000000000[1-6]`), Bay 1, owner and worker in
+  `DevDataSeed.cs` (see "Dev Environment"). Do not reintroduce `Guid.NewGuid()` in the dev seed.
 - Seed backfill must survive `docker compose down -v`.
-- After `docker compose up --build -d`, if the Users table is empty, run
-  `docker compose restart backend` (without `--build`) to trigger the seed.
 
 ---
 
@@ -162,6 +161,10 @@ These exist because earlier agent sessions failed in exactly these ways.
 - Dev tenant: slug `dev-wash`, ID `80b059d6-c10f-47a6-8296-797009d5aa3d`
 - Dev seed users (local only): `owner@devwash.local / Owner123!`,
   `worker@devwash.local / Worker123!`
+- The dev seed (tenant, owner, worker, Bay 1, services) runs at backend startup in
+  Development; `docker compose restart backend` is not needed (ADR-025).
+- Fixed dev IDs: Bay 1 `b0000000-0000-4000-8000-000000000001`; service
+  "Kombi — obično pranje" `5e000000-0000-4000-8000-000000000005` (useful for curl tests).
 
 ---
 

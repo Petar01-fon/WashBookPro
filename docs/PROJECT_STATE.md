@@ -2,7 +2,7 @@
 
 **Poslednje ažuriranje:** 2026-10-06
 **Aktivan developer:** Solo (Petar Bogdanović)
-**Trenutna faza:** Faza 1 — sanacija (plan P0–P5), aktivan P1
+**Trenutna faza:** Faza 1 — sanacija (plan P0–P5), P0 i P1 završeni; sledeći je P2 (čeka Petrov nalog)
 
 > Za istoriju implementiranih funkcionalnosti videti `docs/ROADMAP.md`.
 > Ovaj dokument fokusira se na **trenutno stanje i sledeće korake**.
@@ -73,12 +73,20 @@ Commit-i po gate-ovima:
 Provereno: `ReservationTable.tsx` i `summary.ts` prošli su samo `tsc --noEmit` i lint
 (bez novih grešaka). Nisu prošli zone test ni živi test u browseru.
 
-**Sledeće:** P1 — determinizam dev okruženja (ne počinje bez Petrovog naloga).
+### P1 — determinizam dev okruženja (ZAVRŠEN 2026-10-06)
 
-### P1 — determinizam dev okruženja
+Cilj: sveži start (`docker compose down -v` + `up --build -d`) daje iste ID-jeve usluga, boksa i korisnika.
 
-GUID seeding (`ReservationSeed.cs` koristi `Guid.NewGuid()`), null render fix.
-Odobren plan je u `docs/P1-PLAN.md` (izvršava se gate po gate; fajl se briše kad se P1 završi).
+Commit-i po gate-ovima:
+- Gate 0 — istraživanje "null render" (bez commita): uzrok nije utvrđen, Petar se ne seća ekrana. Nalazi A–J su u sekciji "Otvoreni nalazi iz P1"; nijedan ne ulazi u P1.
+- Gate 1 — reprodukcija svežeg starta (bez commita): dva čista starta posle `down -v`, `Users` = 2 u oba. "Users prazna" nije reprodukovana. Uzrok (raniji seed nije kreirao tenant ni korisnike) rešen je u ADR-025 (`188cd8c`).
+- Gate 2 — fiksni ID-jevi u dev seed-u (usluge, Bay 1, owner, worker): `2a1c748`
+- Gate 3 — preskočen (uslov nije ispunjen, vidi Gate 1).
+- Gate 4 — zatvaranje P1 i ažuriranje dokumentacije: ovaj commit (`docs: close P1 and update project state`).
+
+Backup pre reseta (`p1_backup.dump`) ostaje u scratchpad-u i ne vraća se automatski.
+
+**Sledeće:** P2 — Result tip i email signal (ne počinje bez Petrovog naloga).
 
 ### P2 — Result tip i email signal
 
@@ -102,6 +110,33 @@ ADR kandidati iz P0:
 ### P5 — zauzetost boksa kao stvarno praćenje vremena početka
 
 ---
+
+## Otvoreni nalazi iz P1 (van P1)
+
+Nalazi iz P1 (Gate 0 i build) nisu deo P1 i ne popravljaju se u P1.
+
+### UI prazna stanja i obrada grešaka
+
+Prioritet: **B** i **C**.
+
+- **A** `web/app/(dashboard)/dashboard/services/page.tsx:129-156` — sa 0 usluga prikazuje se samo naslov i dugme, bez poruke. Potvrđeno uživo. Ako se pokaže da seed može da padne, A se razmatra kroz uzrok.
+- **B** `web/app/(dashboard)/dashboard/reservations/ReservationsView.tsx:17-19` — greška API-ja prikaže "Nema rezervacija za izabrani dan." (lažno prazno stanje) i unhandled `ApiError`. Potvrđeno uživo.
+- **C** `web/app/(dashboard)/dashboard/reservations/ReservationCalendar.tsx:17-27` — boksovi se izvode iz rezervacija, pa boks bez rezervacija za izabrani dan nije vidljiv u kalendaru. Potvrđeno uživo.
+- **D** `web/app/terminal/[slug]/WalkInDialog.tsx:125-139` — prazan `<select>` za usluge ili boksove bez poruke (samo kod).
+- **E** `web/app/(dashboard)/dashboard/bays/BaysView.tsx:99-162` — 0 boksova: samo red za dodavanje, bez poruke (samo kod).
+- **F** `web/app/(dashboard)/dashboard/services/page.tsx:136` — `categoryLabel[category]` nema fallback (samo kod).
+- **G** `web/app/(dashboard)/dashboard/services/page.tsx:68-77` — `load()` bez `catch`, prazna stranica pri grešci (samo kod).
+- **H** `web/app/(dashboard)/dashboard/stats/StatsView.tsx:106` — `: null` pri grešci, ostaje samo banner (samo kod, manji rizik).
+- **I** `web/app/terminal/[slug]/TerminalView.tsx:36-38` — bez tokena `loading` ostaje true, "Učitavanje..." zauvek (samo kod).
+- **J** `web/app/profil/page.tsx:476` — `loading || !profile` bez poruke; prazno telo odgovora daje skeleton zauvek (teorijski).
+
+Referentni obrazac: booking flow (`web/app/book/[slug]/CategoryStep.tsx:61-63`, `DateTimeStep.tsx:101-103`).
+Nije pokriveno uživo: worker nalog, anonimni posetilac na terminalu i dashboardu, `/dashboard/bays`, `/dashboard/stats`.
+
+### Build upozorenja (backend)
+
+- **NU1903** — `Microsoft.OpenApi` 2.0.0, GHSA-v5pm-xwqc-g5wc, visoka ozbiljnost: "Circular schema references may terminate OpenAPI parsing". Ispravljeno u 2.7.5. Nije samo dev zavisnost: paket ulazi preko `Microsoft.AspNetCore.OpenApi` 10.0.5, a `AddOpenApi()` je u `Program.cs:75` bez uslova. Dev je samo mapiranje endpoint-a (`Program.cs:79-82`). Popravka traži promenu verzije paketa, pa je potrebno odobrenje. Uticaj nije ispitan do kraja (aplikacija generiše OpenAPI dokument, ne parsira ga).
+- **CS8629** — `backend/src/WashBookPro.Api/Modules/Reservations/ServicesController.cs:68`: `(Guid)tenantId` je nullable cast bez provere. Ako `TenantId` nije u tokenu, baca `InvalidOperationException`. Nije ispravljeno.
 
 ## Eskalirani problemi
 
