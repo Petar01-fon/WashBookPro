@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — WashBookPro
 
-**Poslednje ažuriranje:** 2026-10-06
+**Poslednje ažuriranje:** 2026-10-07
 **Aktivan developer:** Solo (Petar Bogdanović)
-**Trenutna faza:** Faza 1 — temelj (M1). P0–P2 i ADR-026 (pravac proizvoda) završeni; sledeći je T1 (čeka Petrov nalog)
+**Trenutna faza:** Faza 1 — temelj (M1). P0–P2, ADR-026 (pravac proizvoda) i T1 (test projekat) završeni; sledeći je minimalan produkcioni deploy (M1, tačka 4), čeka Petrov nalog
 
 > Za istoriju implementiranih funkcionalnosti videti `docs/ROADMAP.md`.
 > Ovaj dokument fokusira se na **trenutno stanje i sledeće korake**.
@@ -69,10 +69,10 @@ Redosled:
 
 1. **P2 — Result tip i email signal (ZAVRŠEN).**
 2. **ADR za pravac proizvoda (ZAVRŠEN).** ADR-026.
-3. **T1 — test projekat.** `backend/tests/WashBookPro.Api.Tests` (xUnit +
-   Testcontainers/Postgres). Prvo testovi za availability (prozori po boksu,
-   ±15 min buffer, same-day cutoff) i konflikte (409). Uvodi novu strukturu i
-   zavisnosti → poseban plan i odobrenje.
+3. **T1 — test projekat (ZAVRŠEN).** `backend/tests/WashBookPro.Api.Tests` (xUnit v3 +
+   Testcontainers/Postgres). 35 testova: availability (prozori po boksu, ±15 min buffer,
+   same-day cutoff) i kreiranje rezervacije i walk-in (201 / 400 / 401 / 404 / 409, `emailSent`).
+   Vidi sekciju "T1 — test projekat".
 4. **Minimalan produkcioni deploy** (kraj M1 ili početak M2). Hetzner VPS +
    Docker Compose, HTTPS, domen (`washbook.rs` ili `washbook.app`). Cilj: javni URL
    rano, da se deploy problemi otkriju pre M3. Stvrdnjavanje je u M3.
@@ -203,6 +203,45 @@ Otvoreno iz P2:
 
 **Sledeće:** T1 (čeka Petrov nalog). ADR za pravac proizvoda je napisan kao ADR-026.
 
+### T1 — test projekat (ZAVRŠEN 2026-10-07)
+
+Cilj: prvi automatski test projekat za backend. Availability i kreiranje
+rezervacije su do sada proveravani samo ručno; testovi zaključavaju ponašanje
+iz P0 i P2. Strategija je u ADR-027 (status Predloženo).
+
+Commit-i po gate-ovima:
+- Gate 1 — projekat, fixture, smoke test, `global.json`: `d6df79e`
+  (`test: add API test project with Postgres test container`)
+- Gate 2 — availability, A1–A12: `34d54d6`
+  (`test: cover availability windows, buffer and same-day cutoff`)
+- Gate 3 — kreiranje rezervacije i walk-in, C1–C17 i W1–W4: `5cffb47`
+  (`test: cover reservation creation outcomes and slot conflicts`)
+- Gate 4 — zatvaranje T1, ADR-027, ažuriranje dokumentacije: ovaj commit
+  (`docs: close T1, add ADR-027 test strategy`)
+
+Rezultat: 35 testova (2 smoke, 12 availability, 21 kreiranje i walk-in), svi
+prolaze. `dotnet test` iz `backend/` (traži Docker).
+
+Nalazi:
+- Nijedan test nije pao. Nijedno očekivanje nije menjano.
+- Testovi potvrđuju P0 i P2 ponašanje: 400 za `startsAt` bez zone, 404 za
+  nepostojeću ili neaktivnu uslugu i boks, 409 samo za zauzet termin, 201 sa
+  `emailSent: false` kad email padne.
+- Kreiranje nema buffer (C4 to zaključava, Locked Decision u `CLAUDE.md`).
+- `dotnet test` na .NET 10 SDK-u traži `backend/global.json` sa
+  `Microsoft.Testing.Platform` runner-om (odluka B, odobrena 2026-10-07). CI
+  workflow nije menjan.
+- A8 (same-day cutoff) prolazi, ali se preskače u prozoru 23:00–00:02 po
+  beogradskom vremenu. Pokrivenost cutoff-a nije 100% vremena.
+
+Otvoreno iz T1:
+- Race condition (dva istovremena POST-a na isti termin) nije pokriven.
+- `GET /reservations`, `PATCH .../status`, `DELETE`, statistika, auth,
+  customer auth, usluge i boksovi nemaju testove.
+- Frontend testovi ne postoje.
+
+`docs/T1-PLAN.md` je obrisan u commit-u zatvaranja.
+
 ### P3, P4, P5 — rade se uz feature rad
 
 - **P3** — konsolidacija formatiranja datuma (ostatak). Zona je rešena u `fe93b3e`
@@ -216,14 +255,14 @@ Otvoreno iz P2:
 
 ### ADR dug
 
-U `docs/decisions/` postoje ADR-001 do ADR-026.
+U `docs/decisions/` postoje ADR-001 do ADR-027.
 
 - Booking redesign (pominjan u planiranju, **još nije napisan**; dobija sledeći slobodan broj — 026 je pravac proizvoda)
 - "API ugovor: `startsAt` mora sadržati zonu; vrednost bez zone → 400" (iz P0)
 - "Staff registracija uklonjena do onboardinga" (iz P0)
 - "Kreiranje rezervacije: 404 za nepostojeću/neaktivnu uslugu ili boks, 409 samo za zauzet termin; odgovor sadrži `emailSent`" (iz P2)
 - Uz feature: ANPR arhitektura (tokom spike-a), kategorije po tenantu, model radnog
-  vremena, snapshot cene i naplata, test strategija (T1), hosting i deploy
+  vremena, snapshot cene i naplata, hosting i deploy
 
 ---
 
@@ -310,6 +349,7 @@ realni tenant.
 - **Booking flow** — `web/app/book/[slug]/`
 - **Worker terminal** — `web/app/terminal/[slug]/`
 - **Backend moduli** — `backend/src/WashBookPro.Api/Modules/{Auth,Customers,Reservations,Tenants}/`
+- **Backend testovi** — `backend/tests/WashBookPro.Api.Tests/` (ADR-027)
 - **Dev tenant** — ID `80b059d6-c10f-47a6-8296-797009d5aa3d`, slug `dev-wash`
 
 ---
@@ -321,3 +361,4 @@ realni tenant.
 | Pokretanje okruženja | `docker compose up --build -d` iz `/infra/` |
 | Backend Scalar API docs | `http://localhost:8080/scalar/v1` |
 | pgAdmin | `http://localhost:5050` |
+| Backend testovi | `dotnet test` iz `backend/` (traži Docker) |
