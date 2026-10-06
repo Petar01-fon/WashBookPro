@@ -183,6 +183,11 @@ MVP za prvu autopraonicuu: rezervacije, terminal za radnike, vlasnički dashboar
 
 ---
 
+> **Napomena (2026-10-06):** Faze 2–4 ispod ne važe kao plan do proleća 2027.
+> Zamenio ih je pravac iz ADR-026 (`docs/decisions/ADR-026-pravac-proizvoda.md`):
+> milestone-i M1–M4 u `docs/PROJECT_STATE.md`. Sadržaj faza ostaje kao istorija
+> prvobitnog plana; delovi koji nisu u M1–M4 su odloženi posle sezone.
+
 ## Faza 2 — Proširenje (Mesec 6–8) · Planirano
 
 ANPR zaštita od krađe, B2B portal, notifikacije, mobilna aplikacija u punom obimu.

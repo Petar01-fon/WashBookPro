@@ -2,7 +2,7 @@
 
 **Poslednje ažuriranje:** 2026-10-06
 **Aktivan developer:** Solo (Petar Bogdanović)
-**Trenutna faza:** Faza 1 — temelj (M1). P0–P2 završeni; sledeći je ADR za pravac proizvoda, pa T1 (čeka Petrov nalog)
+**Trenutna faza:** Faza 1 — temelj (M1). P0–P2 i ADR-026 (pravac proizvoda) završeni; sledeći je T1 (čeka Petrov nalog)
 
 > Za istoriju implementiranih funkcionalnosti videti `docs/ROADMAP.md`.
 > Ovaj dokument fokusira se na **trenutno stanje i sledeće korake**.
@@ -34,8 +34,8 @@ WashBook-u u produkciji, uz pilot sa jednom firmom koja ima flotu.
 | Mobilna app | Odložena; responsive web + PWA |
 | Hosting | Hetzner VPS + Docker Compose |
 
-Pravac se beleži u posebnom ADR-u odmah posle P2 (vidi M1). Ostale odluke idu u
-ADR-ove uz feature na koji se odnose (vidi "ADR dug").
+Pravac je zabeležen u ADR-026 (`docs/decisions/ADR-026-pravac-proizvoda.md`).
+Ostale odluke idu u ADR-ove uz feature na koji se odnose (vidi "ADR dug").
 
 ---
 
@@ -68,8 +68,7 @@ Aktivan tenant za razvoj: **dev-wash** (ID: `80b059d6-c10f-47a6-8296-797009d5aa3
 Redosled:
 
 1. **P2 — Result tip i email signal (ZAVRŠEN).**
-2. **ADR za pravac proizvoda.** Poseban zadatak odmah posle P2, pre T1. Beleži
-   odluke iz sekcije "Pravac proizvoda" (hibrid, pretplata, milestone-i, odloženo).
+2. **ADR za pravac proizvoda (ZAVRŠEN).** ADR-026.
 3. **T1 — test projekat.** `backend/tests/WashBookPro.Api.Tests` (xUnit +
    Testcontainers/Postgres). Prvo testovi za availability (prozori po boksu,
    ±15 min buffer, same-day cutoff) i konflikte (409). Uvodi novu strukturu i
@@ -202,7 +201,7 @@ Otvoreno iz P2:
 - Walk-in UI (`WalkInDialog`) ignoriše `emailSent` — namerno, van plana; kandidat za kasnije.
 - Panel "Pregled rezervacije" na booking flow-u prikazuje `undefined · …` u redu "Kategorija" (viđeno u Gate 3 browser testu, nije dijagnostikovano ni popravljeno).
 
-**Sledeće:** ADR za pravac proizvoda, pa T1 (čeka Petrov nalog).
+**Sledeće:** T1 (čeka Petrov nalog). ADR za pravac proizvoda je napisan kao ADR-026.
 
 ### P3, P4, P5 — rade se uz feature rad
 
@@ -217,13 +216,12 @@ Otvoreno iz P2:
 
 ### ADR dug
 
-U `docs/decisions/` postoje ADR-001 do ADR-025.
+U `docs/decisions/` postoje ADR-001 do ADR-026.
 
-- ADR-026 — booking redesign (pominjan u planiranju, **još nije napisan**)
+- Booking redesign (pominjan u planiranju, **još nije napisan**; dobija sledeći slobodan broj — 026 je pravac proizvoda)
 - "API ugovor: `startsAt` mora sadržati zonu; vrednost bez zone → 400" (iz P0)
 - "Staff registracija uklonjena do onboardinga" (iz P0)
 - "Kreiranje rezervacije: 404 za nepostojeću/neaktivnu uslugu ili boks, 409 samo za zauzet termin; odgovor sadrži `emailSent`" (iz P2)
-- Pravac proizvoda — poseban zadatak u M1, odmah posle P2
 - Uz feature: ANPR arhitektura (tokom spike-a), kategorije po tenantu, model radnog
   vremena, snapshot cene i naplata, test strategija (T1), hosting i deploy
 
