@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createReservation, ReservationConflictError } from "@/lib/booking-api";
-import { formatDateSr } from "@/lib/date-format";
+import { formatDateSr, formatTimeSr } from "@/lib/date-format";
 import { BookingAction, BookingState } from "./bookingReducer";
 import { parseLocalDateString } from "./DateTimeStep";
 
@@ -11,10 +11,6 @@ interface Props {
     slug: string;
     state: BookingState;
     dispatch: (action: BookingAction) => void;
-}
-
-function formatTime(startsAt: string): string {
-    return new Date(startsAt).toLocaleTimeString("sr-Latn-RS", { hour: "2-digit", minute: "2-digit" });
 }
 
 // Gate D4: real step 4 — review + submit. On 409 (slot taken while the customer
@@ -93,7 +89,7 @@ export function ConfirmationStep({ slug, state, dispatch }: Props) {
                         <div>{state.date && formatDateSr(parseLocalDateString(state.date))}</div>
                         {state.slot && (
                             <div>
-                                {formatTime(state.slot.startsAt)} · {state.slot.bayName}
+                                {formatTimeSr(state.slot.startsAt)} · {state.slot.bayName}
                             </div>
                         )}
                     </dd>

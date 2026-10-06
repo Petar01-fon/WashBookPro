@@ -1,4 +1,5 @@
 import { ReservationItem } from "@/lib/dashboard-api";
+import { formatTimeSr } from "@/lib/date-format";
 
 const STATUS_LABELS: Record<number, string> = {
   0: "Na čekanju",
@@ -44,15 +45,9 @@ export function ReservationTable({ reservations }: Props) {
           {reservations.map((r) => (
             <tr key={r.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 text-gray-700">
-                {new Date(r.startsAt).toLocaleTimeString("sr-Latn-RS", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatTimeSr(r.startsAt)}
                 {" — "}
-                {new Date(r.endsAt).toLocaleTimeString("sr-Latn-RS", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatTimeSr(r.endsAt)}
               </td>
               <td className="px-4 py-3">
                 <div className="font-medium text-gray-900">{r.customer.name}</div>

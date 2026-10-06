@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { getReservations, updateReservationStatus, cancelReservation, type TerminalReservation, type ReservationStatus } from "@/lib/terminal-api";
 import { getAccessToken, logout } from "@/lib/auth";
+import { belgradeDateString } from "@/lib/date-format";
 import { useRouter } from "next/navigation";
 import ReservationCard from "./ReservationCard";
 import WalkInDialog from "./WalkInDialog";
@@ -29,7 +30,7 @@ export default function TerminalView({ slug }: Props) {
   const [walkInOpen, setWalkInOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = belgradeDateString(new Date());
 
   const fetchReservations = useCallback(async () => {
     const token = getAccessToken();
@@ -100,7 +101,7 @@ export default function TerminalView({ slug }: Props) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Terminal</h1>
           <p className="text-gray-400 text-sm mt-0.5">
-            {new Date().toLocaleDateString("sr-Latn-RS", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            {new Date().toLocaleDateString("sr-Latn-RS", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Belgrade" })}
           </p>
         </div>
         <div className="flex items-center gap-3">

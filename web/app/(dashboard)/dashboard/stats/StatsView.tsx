@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getDashboardStats, type StatsResponse } from "@/lib/dashboard-api";
-
-function toDateString(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
+import { belgradeDateString } from "@/lib/date-format";
 
 function KpiCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -25,7 +22,7 @@ export function StatsView() {
 
   useEffect(() => {
     setLoading(true);
-    getDashboardStats(toDateString(date))
+    getDashboardStats(belgradeDateString(date))
       .then(setStats)
       .catch(() => setError("Greška pri učitavanju statistika."))
       .finally(() => setLoading(false));
@@ -37,7 +34,7 @@ export function StatsView() {
         <h1 className="text-xl font-semibold text-gray-900">Statistike</h1>
         <input
           type="date"
-          value={toDateString(date)}
+          value={belgradeDateString(date)}
           onChange={(e) => setDate(new Date(e.target.value))}
           className="rounded-md border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-blue-500"
         />
@@ -59,6 +56,7 @@ export function StatsView() {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
+                timeZone: "Europe/Belgrade",
               })}
             </h2>
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

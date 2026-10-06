@@ -1,4 +1,4 @@
-import { formatDateSr } from "@/lib/date-format";
+import { formatDateSr, formatTimeSr } from "@/lib/date-format";
 import { BookingState, Step } from "./bookingReducer";
 import { parseLocalDateString } from "./DateTimeStep";
 
@@ -10,10 +10,7 @@ export function stepSummaryLabel(step: Step, state: BookingState): string {
             return state.serviceName ? `${state.category} · ${state.serviceName}` : "—";
         case 2: {
             if (!state.slot) return "—";
-            const time = new Date(state.slot.startsAt).toLocaleTimeString("sr-Latn-RS", {
-                hour: "2-digit",
-                minute: "2-digit",
-            });
+            const time = formatTimeSr(state.slot.startsAt);
             const date = state.date ? formatDateSr(parseLocalDateString(state.date)) : "";
             return `${date} · ${time} · ${state.slot.bayName}`;
         }

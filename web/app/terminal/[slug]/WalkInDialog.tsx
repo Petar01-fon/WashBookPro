@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getBays, getServices, createWalkIn, type BayOption, type ServiceOption } from "@/lib/terminal-api";
+import { belgradeDateString, belgradeTimeString, belgradeWallTimeToUtcIso } from "@/lib/date-format";
 
 interface Props {
   slug: string;
@@ -27,9 +28,9 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const now = new Date();
-  const localDate = now.toISOString().split("T")[0];
-  const currentMinutes = now.getMinutes();
-  const roundedTime = `${String(now.getHours()).padStart(2, "0")}:${currentMinutes < 30 ? "00" : "30"}`;
+  const belgradeDate = belgradeDateString(now);
+  const [belgradeHour, belgradeMinute] = belgradeTimeString(now).split(":").map(Number);
+  const roundedTime = `${String(belgradeHour).padStart(2, "0")}:${belgradeMinute < 30 ? "00" : "30"}`;
   const initialTime = TIME_SLOTS.includes(roundedTime) ? roundedTime : "08:00";
 
   const [form, setForm] = useState({
@@ -38,7 +39,7 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
     customerEmail: "",
     serviceId: "",
     bayId: "",
-    date: localDate,
+    date: belgradeDate,
     time: initialTime,
     notes: "",
   });
@@ -78,7 +79,7 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
         customerEmail: form.customerEmail,
         serviceId: form.serviceId,
         bayId: form.bayId,
-        startsAt: new Date(`${form.date}T${form.time}:00`).toISOString(),
+        startsAt: belgradeWallTimeToUtcIso(form.date, form.time),
         notes: form.notes || undefined,
       });
       onSuccess();
@@ -145,7 +146,7 @@ export default function WalkInDialog({ slug, onClose, onSuccess }: Props) {
                   type="date"
                   value={form.date}
                   onChange={handleChange}
-                  min={localDate}
+                  min={belgradeDate}
                   className="input-field"
                 />
               </Field>

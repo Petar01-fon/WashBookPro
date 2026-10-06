@@ -2,7 +2,7 @@
 
 import { DayPicker } from "react-day-picker";
 import { Timeslot } from "@/lib/booking-api";
-import { formatDateSr } from "@/lib/date-format";
+import { formatDateSr, formatTimeSr } from "@/lib/date-format";
 import { BookingAction, BookingState } from "./bookingReducer";
 
 interface Props {
@@ -26,10 +26,6 @@ export function toLocalDateString(date: Date): string {
 export function parseLocalDateString(value: string): Date {
     const [y, m, d] = value.split("-").map(Number);
     return new Date(y, m - 1, d);
-}
-
-function formatTime(startsAt: string): string {
-    return new Date(startsAt).toLocaleTimeString("sr-Latn-RS", { hour: "2-digit", minute: "2-digit" });
 }
 
 // Single source for Serbian date naming across the whole app: Intl, same as
@@ -130,7 +126,7 @@ export function DateTimeStep({ state, dispatch, slots, loading, error }: Props) 
                                                 : "border-[var(--wb-border)] bg-white text-[var(--wb-fg)] hover:border-[var(--wb-accent)]/40",
                                         ].join(" ")}
                                     >
-                                        {formatTime(slot.startsAt)}
+                                        {formatTimeSr(slot.startsAt)}
                                     </button>
                                 );
                             })}

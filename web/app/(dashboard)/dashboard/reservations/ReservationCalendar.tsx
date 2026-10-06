@@ -1,4 +1,5 @@
 import { ReservationItem } from "@/lib/dashboard-api";
+import { belgradeTimeString } from "@/lib/date-format";
 
 const STATUS_COLORS: Record<number, string> = {
   0: "bg-yellow-100 border-yellow-300 text-yellow-800",
@@ -26,8 +27,8 @@ export function ReservationCalendar({ reservations, date }: Props) {
   }
 
   function getTop(startsAt: string): number {
-    const d = new Date(startsAt);
-    return ((d.getHours() - 8) * 60 + d.getMinutes()) * (64 / 60);
+    const [hour, minute] = belgradeTimeString(new Date(startsAt)).split(":").map(Number);
+    return ((hour - 8) * 60 + minute) * (64 / 60);
   }
 
   function getHeight(startsAt: string, endsAt: string): number {

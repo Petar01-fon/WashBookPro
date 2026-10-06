@@ -2,12 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { getDashboardReservations, ReservationItem } from "@/lib/dashboard-api";
+import { belgradeDateString } from "@/lib/date-format";
 import { ReservationTable } from "./ReservationTable";
 import { ReservationCalendar } from "./ReservationCalendar";
-
-function toDateString(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
 
 export function ReservationsView() {
   const [tab, setTab] = useState<"list" | "calendar">("list");
@@ -17,7 +14,7 @@ export function ReservationsView() {
 
   useEffect(() => {
     setLoading(true);
-    getDashboardReservations(toDateString(date))
+    getDashboardReservations(belgradeDateString(date))
       .then(setReservations)
       .finally(() => setLoading(false));
   }, [date]);
@@ -83,6 +80,7 @@ export function ReservationsView() {
             day: "numeric",
             month: "long",
             year: "numeric",
+            timeZone: "Europe/Belgrade",
           })}
         </span>
         <button

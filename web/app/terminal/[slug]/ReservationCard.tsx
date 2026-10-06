@@ -1,6 +1,7 @@
 "use client";
 
 import { type TerminalReservation, type ReservationStatus } from "@/lib/terminal-api";
+import { formatTimeSr } from "@/lib/date-format";
 
 interface Props {
   reservation: TerminalReservation;
@@ -16,10 +17,6 @@ const STATUS_BADGE: Record<number, { label: string; className: string }> = {
   3: { label: "Završeno", className: "bg-gray-500/20 text-gray-400 border border-gray-500/30" },
   4: { label: "Otkazano", className: "bg-red-500/20 text-red-400 border border-red-500/30" },
 };
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("sr-Latn-RS", { hour: "2-digit", minute: "2-digit" });
-}
 
 export default function ReservationCard({ reservation: r, loading, onStatusChange, onCancel }: Props) {
   const badge = STATUS_BADGE[r.status];
@@ -47,7 +44,7 @@ export default function ReservationCard({ reservation: r, loading, onStatusChang
           <span className="text-gray-500">Boks:</span> {r.bay.name}
         </p>
         <p className="text-sm text-gray-300">
-          <span className="text-gray-500">Vreme:</span> {formatTime(r.startsAt)} – {formatTime(r.endsAt)}
+          <span className="text-gray-500">Vreme:</span> {formatTimeSr(r.startsAt)} – {formatTimeSr(r.endsAt)}
         </p>
         <p className="text-sm text-gray-300">
           <span className="text-gray-500">Cena:</span> {r.service.priceRsd.toLocaleString("sr-Latn-RS")} RSD
