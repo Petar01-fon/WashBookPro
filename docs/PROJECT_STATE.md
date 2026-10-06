@@ -2,7 +2,7 @@
 
 **Poslednje ažuriranje:** 2026-10-06
 **Aktivan developer:** Solo (Petar Bogdanović)
-**Trenutna faza:** Faza 1 — sanacija (plan P0–P5), aktivan P0
+**Trenutna faza:** Faza 1 — sanacija (plan P0–P5), aktivan P1
 
 > Za istoriju implementiranih funkcionalnosti videti `docs/ROADMAP.md`.
 > Ovaj dokument fokusira se na **trenutno stanje i sledeće korake**.
@@ -35,7 +35,7 @@ Aktivan tenant za razvoj: **dev-wash** (ID: `80b059d6-c10f-47a6-8296-797009d5aa3
 
 ## Plan sanacije P0–P5
 
-### P0 — korektnost zavisna od okruženja (AKTIVAN)
+### P0 — korektnost zavisna od okruženja (ZAVRŠEN 2026-10-06)
 
 **P0.0 — empirijska provera: ZAVRŠENO 2026-10-06** (Docker :8080, pravi HTTP +
 `psql`, test podaci obrisani posle provere). Rezultati:
@@ -57,14 +57,23 @@ Aktivan tenant za razvoj: **dev-wash** (ID: `80b059d6-c10f-47a6-8296-797009d5aa3
    ponoći po UTC vremenu (terminal/dashboard prikazuju prethodni dan).
 
 **Novo otkriveno tokom P0.0:**
-- **`POST /auth/register` je otvoren bez autentifikacije** — svako može registrovati
-  `Owner` (ili proizvoljnu ulogu) za bilo koji `tenantId`. Nijedan klijent (web,
-  mobile) ga ne poziva. Najviši prioritet.
-- (Nije testirano, uočeno u kodu) `GetReservations` i `GetStats` računaju granice
-  dana u UTC-u umesto po Beogradu.
+- **`POST /auth/register` je otvoren bez autentifikacije** — **REŠENO** (`936e2ff`).
+  Svako može registrovati `Owner` (ili proizvoljnu ulogu) za bilo koji `tenantId`.
+  Nijedan klijent (web, mobile) ga ne poziva.
+- `GetReservations` i `GetStats` računaju granice dana u UTC-u umesto po Beogradu —
+  **potvrđeno i REŠENO u Gate 4** (`294cb24`).
 
-**Sledeće:** ispravke P0.1–P0.5 u pet gate-ova — odobren plan je u `docs/P0-PLAN.md`
-(izvršava se gate po gate; fajl se briše kad se P0 završi).
+Commit-i po gate-ovima:
+- Gate 1 — uklonjen `POST /auth/register`: `936e2ff`
+- Gate 2 — uloge Worker/Owner i TenantId na staff endpointima (P0.2): `3924047`
+- Gate 3 — UTC normalizacija `startsAt`, vrednost bez zone → 400 (P0.1): `04bf85c`
+- Gate 4 — granice dana i meseca po Beogradu u `GetReservations`/`GetStats` (P0.5): `294cb24`
+- Gate 5 — datum i vreme u web-u po Beogradu (P0.3 + P0.4): `fe93b3e`
+
+Provereno: `ReservationTable.tsx` i `summary.ts` prošli su samo `tsc --noEmit` i lint
+(bez novih grešaka). Nisu prošli zone test ni živi test u browseru.
+
+**Sledeće:** P1 — determinizam dev okruženja (ne počinje bez Petrovog naloga).
 
 ### P1 — determinizam dev okruženja
 
@@ -72,30 +81,33 @@ GUID seeding (`ReservationSeed.cs` koristi `Guid.NewGuid()`), null render fix.
 
 ### P2 — Result tip i email signal
 
-### P3 — konsolidacija formatiranja datuma (spojeno sa P0-C)
+### P3 — konsolidacija formatiranja datuma (ostatak)
 
-Problem obuhvata više mesta, ne dva. Pronađeno 2026-10-06:
-- lokalne `formatTime` funkcije: `DateTimeStep.tsx`, `ConfirmationStep.tsx`,
-  `terminal/[slug]/ReservationCard.tsx`
-- `toISOString().split("T")[0]` (UTC datum umesto beogradskog):
-  `TerminalView.tsx:32`, `WalkInDialog.tsx:30`, `ReservationsView.tsx:9`,
-  `StatsView.tsx:7`
+Zona je rešena u `fe93b3e` (P0.3/P0.4): `formatTimeSr`, `belgradeDateString`,
+`belgradeTimeString` i `belgradeWallTimeToUtcIso` u `web/lib/date-format.ts`.
+Ostaje:
+- inline `toLocaleDateString("sr-Latn-RS", …)` umesto `formatDateSr` u
+  `ReservationsView.tsx`, `StatsView.tsx` i `TerminalView.tsx`
 
 ### P4 — ADR dokumentacija
 
 Uključuje ADR-026 (booking redesign) — pominjan u planiranju, ali **još nije
 napisan** (u `docs/decisions/` postoje samo ADR-001 do ADR-025).
 
+ADR kandidati iz P0:
+- "API ugovor: `startsAt` mora sadržati zonu; vrednost bez zone → 400"
+- "Staff registracija uklonjena do Faze 3 onboardinga"
+
 ### P5 — zauzetost boksa kao stvarno praćenje vremena početka
 
 ---
 
-## Eskalirani problemi (nisu još adresirani)
+## Eskalirani problemi
 
-- **`POST /auth/register` otvoren bez autentifikacije** — potvrđeno 2026-10-06 (P0.0).
-- **`[Authorize]` bez `Roles=`** na staff endpointima u
+- **REŠENO** (`936e2ff`): `POST /auth/register` otvoren bez autentifikacije.
+- **REŠENO** (`3924047`): `[Authorize]` bez `Roles=` na staff endpointima u
   `ReservationsController.cs` — `GetReservations`, `UpdateStatus`,
-  `CancelReservation`. Customer JWT prolazi autorizaciju — potvrđeno 2026-10-06 (P0.0).
+  `CancelReservation`. Customer JWT je ranije prolazio autorizaciju (P0.0).
 - **Neograničen rast `Customer` tabele** — anonimni POST kreira novi red za
   svaki nepoznat broj telefona.
 
