@@ -1,34 +1,90 @@
 # PROJECT_STATE.md — WashBookPro
 
-**Poslednje ažuriranje:** 2026-05-07
+**Poslednje ažuriranje:** 2026-10-06
 **Aktivan developer:** Solo (Petar Bogdanović)
-**Trenutna faza:** Faza 1 završena — aktivan razvoj Faze 2
+**Trenutna faza:** Faza 1 — sanacija (plan P0–P5), aktivan P0
 
 > Za istoriju implementiranih funkcionalnosti videti `docs/ROADMAP.md`.
 > Ovaj dokument fokusira se na **trenutno stanje i sledeće korake**.
+> Pravila rada su u `CLAUDE.md`. Od 2026-10-06 planiranje i implementacija se
+> rade direktno u Claude Code-u (bez posredničkog chata).
 
 ---
 
 ## Trenutno stanje
 
-Faza 1 (MVP) je završena. Platforma ima booking flow, worker terminal, owner
-dashboard, services management, Customer auth + profil, i landing stranicu.
+Platforma ima booking flow, worker terminal, owner dashboard, upravljanje
+uslugama, Customer auth + profil i landing stranicu.
 Aktivan tenant za razvoj: **dev-wash** (ID: `80b059d6-c10f-47a6-8296-797009d5aa3d`).
+
+### Završeno od prethodnog ažuriranja (2026-05-07)
+
+- ADR-024: razdvojene rute — `POST /reservations` (AllowAnonymous, Customer)
+  i `POST /reservations/walk-in` (Worker/Owner), `CreatedBy` određuje server
+- ADR-025: migracije i dev seed pri startu backend-a
+- Booking wizard `/book/[slug]` (redesign): kategorija → usluga, datum/vreme
+  (`react-day-picker`), podaci kupca (`plateNumber` nullable varchar(16) za
+  budući ANPR), potvrda sa 409 race-condition oporavkom
+- Availability algoritam: slobodni prozori po boksu, simetrični ±15 min
+  buffer, 30 min same-day cutoff po beogradskom vremenu, overlap upit za konflikte
+- HTML email potvrde (inline stilovi, `WebUtility.HtmlEncode` na korisničkim
+  vrednostima), vreme konvertovano u Beograd, podaci o tenantu (opcioni telefon)
+- Success stranica sa `.ics` preuzimanjem i eksplicitnim `Europe/Belgrade`
 
 ---
 
-## Šta je sledeće
+## Plan sanacije P0–P5
 
-### 1. Booking flow redesign — medium-large
+### P0 — korektnost zavisna od okruženja (AKTIVAN)
 
-Trenutni 4-koračni paginirani flow treba da postane single-page wizard sa
-sidebar sumarijem (izabrana usluga, datum, slot) vidljivim u realnom vremenu.
+**P0.0** — empirijska provera sa pokrenutim Dockerom (pet provera), pa
+ispravke P0.1–P0.4:
 
-**Zašto prioritet:** Svaki korak u paginiranom flowu je potencijalni drop-off.
-Single-page format smanjuje percipiranu složenost i povećava konverziju,
-posebno na mobilnom uređaju. Detaljan plan nacrtan u chat istoriji.
+- UTC normalizacija dolaznih `DateTime` vrednosti
+- Eksplicitne `TenantId` provere nedostaju u `UpdateStatus` i `CancelReservation`
+- `formatTime` bez `timeZone` u `DateTimeStep.tsx` i `ConfirmationStep.tsx`
+- `WalkInDialog.tsx:81` koristi `new Date(`${date}T${time}:00`).toISOString()`
+  — zavisi od vremenske zone browsera radnika
 
-### 2. ANPR spike — medium, visoka neizvesnost
+Provereno u kodu 2026-10-06: sve četiri stavke su i dalje otvorene.
+
+### P1 — determinizam dev okruženja
+
+GUID seeding (`ReservationSeed.cs` koristi `Guid.NewGuid()`), null render fix.
+
+### P2 — Result tip i email signal
+
+### P3 — konsolidacija formatiranja datuma (spojeno sa P0-C)
+
+Problem obuhvata više mesta, ne dva. Pronađeno 2026-10-06:
+- lokalne `formatTime` funkcije: `DateTimeStep.tsx`, `ConfirmationStep.tsx`,
+  `terminal/[slug]/ReservationCard.tsx`
+- `toISOString().split("T")[0]` (UTC datum umesto beogradskog):
+  `TerminalView.tsx:32`, `WalkInDialog.tsx:30`, `ReservationsView.tsx:9`,
+  `StatsView.tsx:7`
+
+### P4 — ADR dokumentacija
+
+Uključuje ADR-026 (booking redesign) — pominjan u planiranju, ali **još nije
+napisan** (u `docs/decisions/` postoje samo ADR-001 do ADR-025).
+
+### P5 — zauzetost boksa kao stvarno praćenje vremena početka
+
+---
+
+## Eskalirani problemi (nisu još adresirani)
+
+- **`[Authorize]` bez `Roles=`** na staff endpointima u
+  `ReservationsController.cs` — `GetReservations`, `UpdateStatus`,
+  `CancelReservation`. Customer JWT bi mogao da prođe. Potvrđeno u kodu 2026-10-06.
+- **Neograničen rast `Customer` tabele** — anonimni POST kreira novi red za
+  svaki nepoznat broj telefona.
+
+---
+
+## Sledeće (posle sanacije)
+
+### ANPR spike — medium, visoka neizvesnost
 
 Validacija da PlateRecognizer API radi sa stvarnim kamerama u prijateljevoj
 perionici. Cilj: jedna detektovana tablica → event na backend → prikaz na
@@ -38,13 +94,12 @@ terminalu. ADR piše se tokom spike-a.
 potvrđen u realnom okruženju, B2B i fleet feature mogu biti buildani na
 pogrešnoj pretpostavci.
 
-### 3. Onboarding 2-3 nepoznatih tenanta — non-tech, high impact
+### Onboarding 2-3 nepoznatih tenanta — non-tech, high impact
 
 Onboarding vlasnika perionica bez tehničkog iskustva otkriće friction u
 signup procesu i booking flowu koji dev-wash ne može da pokrije.
 
-**Zašto prioritet:** Jedan aktivan tenant nije market fit validacija. Nepoznati
-korisnik otkriva probleme pre nego što B2B ili fleet feature dobiju prioritet.
+**Zašto prioritet:** Jedan aktivan tenant nije market fit validacija.
 
 ---
 
@@ -56,20 +111,25 @@ managementu za kompanije sa flotama (visok ARPU, duži ciklus prodaje). Odluka
 utiče na prioritizaciju B2B portala, eFaktura integracije i fleet ANPR feature-a.
 Nije donesena.
 
-**Resend production setup** — Trenutna konfiguracija šalje sa development naloga
-na studentskom emailu. Pre onboardinga prvog eksternog tenanta: prebaciti na
-lični nalog, verifikovati custom domain, testirati isporuku na neregistrovane
-adrese. Nije bloker za razvoj, jeste bloker za prvi realni tenant.
+**Resend production setup** — Trenutna konfiguracija šalje sa development naloga.
+Poznati problemi:
+- emailovi potvrde završavaju u spamu — potrebna SPF/DKIM verifikacija domena
+- Resend free plan bez verifikovanog domena šalje samo na adresu vlasnika naloga
+
+Pre onboardinga prvog eksternog tenanta: lični nalog, verifikovan custom domain,
+test isporuke na neregistrovane adrese. Nije bloker za razvoj, jeste za prvi
+realni tenant.
 
 ---
 
 ## Deferred (i zašto)
 
 - **Mobilna app (Expo)** — čeka stabilan web booking flow; mobile i web moraju
-  biti konzistentni, preuranjeni build znači duple izmene pri svakom flow rewrite-u.
-- **SMS/Viber (Infobip)** — čeka eksplicitnu potražnju plaćajućeg tenanta;
-  implementacija pre potražnje je preuranjena optimizacija.
+  biti konzistentni.
+- **SMS/Viber (Infobip)** — čeka eksplicitnu potražnju plaćajućeg tenanta.
 - **B2B portal** — čeka razrešenje otvorenog pitanja pravca (videti gore).
+- **Faza 3+** — SuperAdmin dashboard, self-service onboarding, online plaćanja,
+  subscription billing, produkcioni domen (`washbook.rs` ili `washbook.app`).
 
 ---
 
@@ -78,8 +138,9 @@ adrese. Nije bloker za razvoj, jeste bloker za prvi realni tenant.
 - **Auth** — `web/lib/customer-auth.ts` i `web/lib/auth.ts` (dva odvojena sistema — ADR-022)
 - **API klijent layer** — `web/lib/{api,booking-api,dashboard-api,profile-api}.ts`
 - **Design tokens** — `web/app/globals.css` (komentar `/* WashBook tokens */`)
-- **Booking flow** — `web/app/book/[slug]/` (redesign pending)
-- **Backend moduli** — `backend/src/.../Modules/{Auth,CustomerAuth,Reservations,Tenants}/`
+- **Booking flow** — `web/app/book/[slug]/`
+- **Worker terminal** — `web/app/terminal/[slug]/`
+- **Backend moduli** — `backend/src/WashBookPro.Api/Modules/{Auth,Customers,Reservations,Tenants}/`
 - **Dev tenant** — ID `80b059d6-c10f-47a6-8296-797009d5aa3d`, slug `dev-wash`
 
 ---
