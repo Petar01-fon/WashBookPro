@@ -456,14 +456,14 @@ public partial class ReservationsController : ControllerBase
     [Authorize(Roles = "Worker,Owner")]
     public async Task<IActionResult> GetReservations([FromQuery] DateOnly date)
     {
-        var dayStart = date.ToDateTime(new TimeOnly(0, 0), DateTimeKind.Utc);
-        var dayEnd = date.ToDateTime(new TimeOnly(23, 59, 59), DateTimeKind.Utc);
+        var dayStart = TimeZoneInfo.ConvertTimeToUtc(date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), BelgradeTimeZone);
+        var nextDayStart = TimeZoneInfo.ConvertTimeToUtc(date.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), BelgradeTimeZone);
 
         var reservations = await _db.Reservations
             .Include(r => r.Bay)
             .Include(r => r.Service)
             .Include(r => r.Customer)
-            .Where(r => r.StartsAt >= dayStart && r.StartsAt <= dayEnd)
+            .Where(r => r.StartsAt >= dayStart && r.StartsAt < nextDayStart)
             .OrderBy(r => r.StartsAt)
             .Select(r => new
             {
@@ -532,20 +532,21 @@ public partial class ReservationsController : ControllerBase
         var tenantId = _tenantContext.TenantId;
         if (tenantId is null) return Unauthorized();
 
-        var dayStart = date.ToDateTime(new TimeOnly(0, 0), DateTimeKind.Utc);
-        var dayEnd = date.ToDateTime(new TimeOnly(23, 59, 59), DateTimeKind.Utc);
+        var dayStart = TimeZoneInfo.ConvertTimeToUtc(date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), BelgradeTimeZone);
+        var nextDayStart = TimeZoneInfo.ConvertTimeToUtc(date.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), BelgradeTimeZone);
 
-        var monthStart = new DateTime(date.Year, date.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var monthEnd = monthStart.AddMonths(1).AddSeconds(-1);
+        var monthFirstDay = new DateOnly(date.Year, date.Month, 1);
+        var monthStart = TimeZoneInfo.ConvertTimeToUtc(monthFirstDay.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), BelgradeTimeZone);
+        var nextMonthStart = TimeZoneInfo.ConvertTimeToUtc(monthFirstDay.AddMonths(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), BelgradeTimeZone);
 
         var todayReservations = await _db.Reservations
             .Include(r => r.Service)
-            .Where(r => r.StartsAt >= dayStart && r.StartsAt <= dayEnd)
+            .Where(r => r.StartsAt >= dayStart && r.StartsAt < nextDayStart)
             .ToListAsync();
 
         var monthReservations = await _db.Reservations
             .Include(r => r.Service)
-            .Where(r => r.StartsAt >= monthStart && r.StartsAt <= monthEnd)
+            .Where(r => r.StartsAt >= monthStart && r.StartsAt < nextMonthStart)
             .ToListAsync();
 
         var todayCompleted = todayReservations.Where(r => r.Status == ReservationStatus.Completed);
