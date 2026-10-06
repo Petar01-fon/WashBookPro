@@ -38,12 +38,11 @@ export interface CreateReservationPayload {
     tenantSlug: string;
 }
 
+// Mirrors POST /reservations 201 body. emailSent = Resend accepted the message, not delivered.
 export interface ReservationResult {
     id: string;
-    serviceName: string;
-    startsAt: string;
-    customerName: string;
-    customerEmail: string;
+    status: number;
+    emailSent: boolean;
 }
 
 export async function getTenantBySlug(slug: string): Promise<TenantInfo> {

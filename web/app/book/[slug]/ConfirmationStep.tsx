@@ -29,7 +29,7 @@ export function ConfirmationStep({ slug, state, dispatch }: Props) {
         setSubmitting(true);
         setError(null);
         try {
-            await createReservation({
+            const result = await createReservation({
                 tenantSlug: slug,
                 serviceId: state.serviceId,
                 bayId: state.slot.bayId,
@@ -51,6 +51,7 @@ export function ConfirmationStep({ slug, state, dispatch }: Props) {
                 startsAt: state.slot.startsAt,
                 endsAt: state.slot.endsAt,
                 price: String(state.servicePriceRsd ?? 0),
+                emailSent: result.emailSent ? "1" : "0",
             });
             if (state.plateNumber) params.set("plate", state.plateNumber);
             router.push(`/book/${slug}/success?${params.toString()}`);

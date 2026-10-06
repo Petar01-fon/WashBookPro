@@ -12,6 +12,7 @@ interface Props {
         endsAt?: string;
         price?: string;
         plate?: string;
+        emailSent?: string;
     }>;
 }
 
@@ -29,7 +30,7 @@ function formatTimeBelgrade(iso: string): string {
 
 export default async function SuccessPage({ params, searchParams }: Props) {
     const { slug } = await params;
-    const { name, service, startsAt, endsAt, price, plate } = await searchParams;
+    const { name, service, startsAt, endsAt, price, plate, emailSent } = await searchParams;
 
     // Without these two, there's nothing real to show — rather than render a
     // "successful" booking with blank fields (the previous behavior), tell the
@@ -113,7 +114,9 @@ export default async function SuccessPage({ params, searchParams }: Props) {
                     </dl>
 
                     <p className="text-sm text-[var(--wb-muted)]">
-                        Potvrda je poslata na vašu email adresu.
+                        {emailSent === "1"
+                            ? "Potvrda je poslata na vašu email adresu."
+                            : "Rezervacija je primljena. Potvrdu nismo uspeli da pošaljemo emailom — sačuvajte ovu stranicu ili dodajte termin u kalendar."}
                     </p>
 
                     <div className="space-y-2">
