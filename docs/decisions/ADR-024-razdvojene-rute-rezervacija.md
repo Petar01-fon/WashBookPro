@@ -1,7 +1,7 @@
 # ADR-024 — Razdvojene rute za rezervacije: Customer i Walk-in
 
 **Datum:** 2026-05-08
-**Status:** Predloženo
+**Status:** Prihvaćeno (implementirano)
 **Faza:** 1.8
 
 ---
@@ -185,6 +185,22 @@ Sve izmene idu u jedan commit kao logička celina.
 Trenutno ima dve vrednosti: `Customer` i `Worker`. B2B fleet bookings (Faza 2+) mogu zahtevati `FleetManager` vrednost. API key integracije mogu zahtevati `ApiClient` ili sličnu vrednost. Enum je lako proširiv bez migracije tipa — samo nova vrednost.
 
 Odluka o proširivanju se odlaže do konkretnog zahteva u odgovarajućoj fazi.
+
+---
+
+## Implementacija
+
+Implementirano u tri commit-a umesto jednog (odstupanje od "Redosled
+implementacije"):
+
+- `acd480c` — `ReservationCreatedBy` kao enum (korak 1)
+- `a800efd` — razdvojene rute po publici (korak 2)
+- `1f40b32` — frontend usklađen sa novim rutama (korak 3)
+
+Kasnije izmene istih endpoint-a: `startsAt` mora imati zonu, vrednost bez
+zone → 400 (`04bf85c`); 404 za nepostojeću/neaktivnu uslugu ili boks i
+`emailSent` u odgovoru (`9bb3e59`, `1f5039b`). Te odluke još nemaju svoj
+ADR (vidi "ADR dug" u `docs/PROJECT_STATE.md`).
 
 ---
 

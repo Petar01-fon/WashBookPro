@@ -109,7 +109,7 @@ Postavljanje razvojnog okruženja, scaffold svih aplikacija i deployment pipelin
 
 ---
 
-## Faza 1 — MVP (Mesec 3–5) · Planirano
+## Faza 1 — MVP (Mesec 3–5) · U toku
 
 MVP za prvu autopraonicuu: rezervacije, terminal za radnike, vlasnički dashboard.
 

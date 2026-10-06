@@ -134,9 +134,12 @@ These exist because earlier agent sessions failed in exactly these ways.
 - Design direction "Confident Utility" (ADR-023): off-white `#FAFAF7`, navy
   `#0A0E27`, single accent electric blue `#2563EB`, Figtree + GeistMono,
   no gradients on functional elements, monospace eyebrow labels.
-- Serbian dates: use `Intl` (`toLocaleDateString("sr-Latn-RS")`) with explicit
-  `timeZone: "Europe/Belgrade"`; genitive/nominative month forms come from the
-  custom lookup helper. Do not use `date-fns` `sr-Latn` for month forms.
+- Serbian dates: month names are nominative ("15. jul 2026", not "15. jula").
+  Web formats through `web/lib/date-format.ts` (`formatDateSr`, `formatTimeSr`,
+  `belgrade*` helpers), which use `Intl` `sr-Latn-RS` with explicit
+  `timeZone: "Europe/Belgrade"` for instants. Backend (email) uses the lookup
+  table in `Common/Formatting/SerbianDateFormatter.cs`. Do not use `date-fns`
+  `sr-Latn` for month forms.
 
 ---
 
