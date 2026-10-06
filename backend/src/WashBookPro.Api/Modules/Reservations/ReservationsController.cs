@@ -259,6 +259,25 @@ public partial class ReservationsController : ControllerBase
         return flooredToMinute.AddMinutes(minutesToNextBoundary);
     }
 
+    // System.Text.Json tags "...Z" as Utc and "...+01:00" as Local (already shifted
+    // into the server's zone, so ToUniversalTime is exact). A value with no zone at
+    // all is Unspecified and genuinely ambiguous — rejected rather than guessed.
+    private static bool TryNormalizeToUtc(DateTime value, out DateTime utc)
+    {
+        switch (value.Kind)
+        {
+            case DateTimeKind.Utc:
+                utc = value;
+                return true;
+            case DateTimeKind.Local:
+                utc = value.ToUniversalTime();
+                return true;
+            default:
+                utc = default;
+                return false;
+        }
+    }
+
     // POST /reservations — public, guest/customer booking
     [HttpPost]
     [AllowAnonymous]
@@ -268,6 +287,9 @@ public partial class ReservationsController : ControllerBase
         if (tenant is null)
             return NotFound("Tenant not found");
 
+        if (!TryNormalizeToUtc(request.StartsAt, out var startsAtUtc))
+            return BadRequest("startsAt must include a timezone offset (e.g. \"2026-12-15T08:00:00Z\")");
+
         var plateNumber = string.IsNullOrWhiteSpace(request.PlateNumber)
             ? null
             : request.PlateNumber.Trim().ToUpperInvariant();
@@ -276,7 +298,7 @@ public partial class ReservationsController : ControllerBase
             tenantId: tenant.Id,
             serviceId: request.ServiceId,
             bayId: request.BayId,
-            startsAt: request.StartsAt,
+            startsAt: startsAtUtc,
             plateNumber: plateNumber,
             customerName: request.CustomerName,
             customerPhone: request.CustomerPhone,
@@ -297,11 +319,14 @@ public partial class ReservationsController : ControllerBase
         var tenantId = _tenantContext.TenantId;
         if (tenantId is null) return Unauthorized();
 
+        if (!TryNormalizeToUtc(request.StartsAt, out var startsAtUtc))
+            return BadRequest("startsAt must include a timezone offset (e.g. \"2026-12-15T08:00:00Z\")");
+
         var reservation = await CreateReservationCoreAsync(
             tenantId: tenantId.Value,
             serviceId: request.ServiceId,
             bayId: request.BayId,
-            startsAt: request.StartsAt,
+            startsAt: startsAtUtc,
             plateNumber: null,
             customerName: request.CustomerName,
             customerPhone: request.CustomerPhone,
