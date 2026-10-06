@@ -53,7 +53,7 @@ public static class DevDataSeed
 
         db.Users.Add(new User
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.Parse("a0000000-0000-4000-8000-000000000001"),
             TenantId = tenantId,
             Email = ownerEmail,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Owner123!"),
@@ -76,7 +76,7 @@ public static class DevDataSeed
 
         db.Users.Add(new User
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.Parse("a0000000-0000-4000-8000-000000000002"),
             TenantId = tenantId,
             Email = workerEmail,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Worker123!"),
@@ -97,7 +97,7 @@ public static class DevDataSeed
 
         db.Bays.Add(new Bay
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.Parse("b0000000-0000-4000-8000-000000000001"),
             TenantId = tenantId,
             Name = "Bay 1",
             IsActive = true,
