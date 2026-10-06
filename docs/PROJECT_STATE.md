@@ -37,16 +37,34 @@ Aktivan tenant za razvoj: **dev-wash** (ID: `80b059d6-c10f-47a6-8296-797009d5aa3
 
 ### P0 — korektnost zavisna od okruženja (AKTIVAN)
 
-**P0.0** — empirijska provera sa pokrenutim Dockerom (pet provera), pa
-ispravke P0.1–P0.4:
+**P0.0 — empirijska provera: ZAVRŠENO 2026-10-06** (Docker :8080, pravi HTTP +
+`psql`, test podaci obrisani posle provere). Rezultati:
 
-- UTC normalizacija dolaznih `DateTime` vrednosti
-- Eksplicitne `TenantId` provere nedostaju u `UpdateStatus` i `CancelReservation`
-- `formatTime` bez `timeZone` u `DateTimeStep.tsx` i `ConfirmationStep.tsx`
-- `WalkInDialog.tsx:81` koristi `new Date(`${date}T${time}:00`).toISOString()`
-  — zavisi od vremenske zone browsera radnika
+1. **UTC normalizacija — BAG.** `POST /reservations` i `POST /reservations/walk-in`:
+   `startsAt` sa `Z` → 201 ✓; sa ofsetom (`+01:00`) i bez sufiksa → **500**
+   (`Cannot write DateTime with Kind=Local/Unspecified to ... timestamp with time zone`),
+   puca u konflikt-upitu (`ReservationsController.cs:342`), pre upisa.
+2. **Customer JWT na staff endpointima — delimično.** Customer JWT nema `tenant_id`;
+   `GET /reservations` → 200 `[]`, `PATCH .../status` i `DELETE` → 404 (umesto 403).
+   Podatke štiti samo query filter, ne autorizacija.
+3. **Cross-tenant — drži.** Owner drugog tenanta: `GET` → 200 `[]`, `PATCH`/`DELETE`
+   na tuđu rezervaciju → 404. `FindAsync` **poštuje** global query filter;
+   eksplicitna `TenantId` provera je defense-in-depth, ne zakrpa za aktivnu rupu.
+4. **Frontend vremenska zona — BAG** (proveravano u `washbook-web` kontejneru, node 20,
+   različiti `TZ`): `formatTime` i `WalkInDialog.tsx:81` zavise od zone browsera
+   (New York: 08:00Z prikazano kao 03:00, walk-in 09:00 poslat kao 14:00Z).
+   `toISOString().split("T")[0]` greši **i u Beogradu** između ponoći po lokalnom i
+   ponoći po UTC vremenu (terminal/dashboard prikazuju prethodni dan).
 
-Provereno u kodu 2026-10-06: sve četiri stavke su i dalje otvorene.
+**Novo otkriveno tokom P0.0:**
+- **`POST /auth/register` je otvoren bez autentifikacije** — svako može registrovati
+  `Owner` (ili proizvoljnu ulogu) za bilo koji `tenantId`. Nijedan klijent (web,
+  mobile) ga ne poziva. Najviši prioritet.
+- (Nije testirano, uočeno u kodu) `GetReservations` i `GetStats` računaju granice
+  dana u UTC-u umesto po Beogradu.
+
+**Sledeće:** ispravke P0.1–P0.5 u pet gate-ova — odobren plan je u `docs/P0-PLAN.md`
+(izvršava se gate po gate; fajl se briše kad se P0 završi).
 
 ### P1 — determinizam dev okruženja
 
@@ -74,9 +92,10 @@ napisan** (u `docs/decisions/` postoje samo ADR-001 do ADR-025).
 
 ## Eskalirani problemi (nisu još adresirani)
 
+- **`POST /auth/register` otvoren bez autentifikacije** — potvrđeno 2026-10-06 (P0.0).
 - **`[Authorize]` bez `Roles=`** na staff endpointima u
   `ReservationsController.cs` — `GetReservations`, `UpdateStatus`,
-  `CancelReservation`. Customer JWT bi mogao da prođe. Potvrđeno u kodu 2026-10-06.
+  `CancelReservation`. Customer JWT prolazi autorizaciju — potvrđeno 2026-10-06 (P0.0).
 - **Neograničen rast `Customer` tabele** — anonimni POST kreira novi red za
   svaki nepoznat broj telefona.
 
