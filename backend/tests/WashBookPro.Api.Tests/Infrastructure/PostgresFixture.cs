@@ -32,6 +32,7 @@ public sealed class PostgresFixture : IAsyncLifetime
             builder.UseSetting("Jwt:Audience", "washbook-tests");
             builder.UseSetting("Google:ClientId", "test-client-id");
             builder.UseSetting("Google:ClientSecret", "test-client-secret");
+            builder.UseSetting("Cors:AllowedOrigins:0", CorsTests.AllowedOrigin);
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IEmailService>();
