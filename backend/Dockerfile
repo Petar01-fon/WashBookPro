@@ -13,6 +13,22 @@ RUN dotnet publish src/WashBookPro.Api/WashBookPro.Api.csproj \
     --self-contained false \
     -o /app/publish
 
+# Stage: EF Core migration bundle (run once per deploy, before `up`; ADR-025)
+FROM build AS migrations
+RUN dotnet tool install --global dotnet-ef --version 10.0.4
+ENV PATH="${PATH}:/root/.dotnet/tools"
+RUN dotnet ef migrations bundle \
+    --project src/WashBookPro.Api/WashBookPro.Api.csproj \
+    --configuration Release \
+    --runtime linux-x64 \
+    --output /app/efbundle \
+    --force
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migrate
+WORKDIR /app
+COPY --from=migrations /app/efbundle .
+ENTRYPOINT ["sh", "-c", "./efbundle --connection \"$ConnectionStrings__Default\""]
+
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app

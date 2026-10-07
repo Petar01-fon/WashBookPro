@@ -8,6 +8,7 @@ using WashBookPro.Api.Common.Middleware;
 using WashBookPro.Api.Common.Persistence;
 using WashBookPro.Api.Modules.Auth.Services;
 using Microsoft.AspNetCore.Authentication.Google;
+using WashBookPro.Api.Modules.Tenants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,6 +83,22 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// One-off production setup: `docker compose run --rm backend bootstrap-tenant`.
+// Creates the first tenant + owner + worker from the Bootstrap config section,
+// then exits without starting the web server.
+if (args.Length > 0 && args[0] == "bootstrap-tenant")
+{
+    using var bootstrapScope = app.Services.CreateScope();
+    var bootstrapLogger = bootstrapScope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var options = TenantBootstrap.ReadOptions(app.Configuration, bootstrapLogger);
+    var result = options is null
+        ? TenantBootstrapResult.InvalidConfiguration
+        : await TenantBootstrap.RunAsync(
+            bootstrapScope.ServiceProvider.GetRequiredService<AppDbContext>(), options, bootstrapLogger);
+    Environment.ExitCode = (int)result;
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {
