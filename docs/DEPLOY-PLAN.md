@@ -605,13 +605,13 @@ poseban mini-commit (`docs(infra): fix deploy runbook`) — tek uz odobrenje.
 
 ---
 
-## Gate 6 — ADR-028, dokumentacija, zatvaranje
+## Gate 6 — ADR za hosting, dokumentacija, zatvaranje
 
-Fajlovi: nov `docs/decisions/ADR-028-hosting-i-deploy.md`,
+Fajlovi: nov `docs/decisions/ADR-NNN-hosting-i-deploy.md` (NNN = sledeći slobodan broj u trenutku pisanja; ADR-028 je strategija platforme),
 `docs/PROJECT_STATE.md`, `CLAUDE.md` (samo jedan red, vidi 3), brisanje
 `docs/DEPLOY-PLAN.md`.
 
-1. **ADR-028** (srpski, format kao ADR-026/027, Status: Predloženo, Autor:
+1. **ADR-NNN** (srpski, format kao ADR-026/027, Status: Predloženo, Autor:
    Petar Bogdanović). Odluka: Hetzner VPS + Docker Compose; Caddy sa
    poddomenima i automatskim HTTPS-om; image-i se build-uju na serveru;
    migracije kao `efbundle` + `migrate` servis (zatvara otvoreno pitanje iz
@@ -629,7 +629,7 @@ Fajlovi: nov `docs/decisions/ADR-028-hosting-i-deploy.md`,
    - nova sekcija `### Deploy — minimalna produkcija (ZAVRŠEN <datum>)` posle
      T1 sekcije: cilj, commit-i po gate-ovima, rezultat provere iz Gate 5,
      nalazi, šta ostaje za M3
-   - "ADR dug": `ADR-001 do ADR-028`; ukloni "hosting i deploy" iz liste
+   - "ADR dug": `ADR-001 do ADR-NNN`; ukloni "hosting i deploy" iz liste
      "Uz feature"
    - "Česti razvojni zadaci": red `Produkcija | vidi infra/README.md`
 3. **`CLAUDE.md`**, sekcija "Dev Environment": red
@@ -640,7 +640,7 @@ Fajlovi: nov `docs/decisions/ADR-028-hosting-i-deploy.md`,
    odobrava zasebno.
 4. Obriši `docs/DEPLOY-PLAN.md`.
 
-**Commit posle odobrenja:** `docs: close production deploy, add ADR-028`
+**Commit posle odobrenja:** `docs: close production deploy, add ADR-NNN`
 
 ---
 

@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — WashBookPro
 
-**Poslednje ažuriranje:** 2026-10-07
+**Poslednje ažuriranje:** 2026-10-08
 **Aktivan developer:** Solo (Petar Bogdanović)
-**Trenutna faza:** Faza 1 — temelj (M1). P0–P2, ADR-026 (pravac proizvoda) i T1 (test projekat) završeni; sledeći je minimalan produkcioni deploy (M1, tačka 4), čeka Petrov nalog
+**Trenutna faza:** Faza 1 — temelj (M1). P0–P2, ADR-026 (pravac proizvoda), T1 (test projekat) i ADR-028 (strategija platforme) završeni; sledeći je redizajn landing stranice za vlasnike perionica (pravac B sa canvasa), čeka Petrov nalog. Produkcioni deploy je odložen na početak M3
 
 > Za istoriju implementiranih funkcionalnosti videti `docs/ROADMAP.md`.
 > Ovaj dokument fokusira se na **trenutno stanje i sledeće korake**.
@@ -32,9 +32,10 @@ WashBook-u u produkciji, uz pilot sa jednom firmom koja ima flotu.
 | Testovi | xUnit + Testcontainers (Postgres), posle P2 i ADR-a za pravac (korak T1) |
 | Sanacija P3–P5 | Ne rade se kao posebne faze, nego uz feature na koji se odnose |
 | Mobilna app | Odložena; responsive web + PWA |
-| Hosting | Hetzner VPS + Docker Compose |
+| Hosting | Odloženo; kandidati Oracle Always Free, Netcup; domen `washbook.tech` |
 
 Pravac je zabeležen u ADR-026 (`docs/decisions/ADR-026-pravac-proizvoda.md`).
+Strategija dvostrane platforme (alat prvo, mreža posle) je u ADR-028.
 Ostale odluke idu u ADR-ove uz feature na koji se odnose (vidi "ADR dug").
 
 ---
@@ -73,9 +74,11 @@ Redosled:
    Testcontainers/Postgres). 35 testova: availability (prozori po boksu, ±15 min buffer,
    same-day cutoff) i kreiranje rezervacije i walk-in (201 / 400 / 401 / 404 / 409, `emailSent`).
    Vidi sekciju "T1 — test projekat".
-4. **Minimalan produkcioni deploy** (kraj M1 ili početak M2). Hetzner VPS +
-   Docker Compose, HTTPS, domen (`washbook.rs` ili `washbook.app`). Cilj: javni URL
-   rano, da se deploy problemi otkriju pre M3. Stvrdnjavanje je u M3.
+4. **Minimalan produkcioni deploy — ODLOŽEN na početak M3** (odluka 2026-10-08).
+   Docker Compose, HTTPS, domen `washbook.tech` (`app.` za web, `api.` za API).
+   Hetzner jeftini tier nije dostupan od 2026-09-07; kandidati su Oracle Always Free
+   (ARM — `backend/Dockerfile` je zakucan na `linux-x64`, treba ga prilagoditi) i
+   Netcup. Kod iz `docs/DEPLOY-PLAN.md` Gate 1–4 je urađen; ostaju server i DNS.
 
 Paralelno, posle P2:
 
@@ -255,7 +258,7 @@ Otvoreno iz T1:
 
 ### ADR dug
 
-U `docs/decisions/` postoje ADR-001 do ADR-027.
+U `docs/decisions/` postoje ADR-001 do ADR-028.
 
 - Booking redesign (pominjan u planiranju, **još nije napisan**; dobija sledeći slobodan broj — 026 je pravac proizvoda)
 - "API ugovor: `startsAt` mora sadržati zonu; vrednost bez zone → 400" (iz P0)
