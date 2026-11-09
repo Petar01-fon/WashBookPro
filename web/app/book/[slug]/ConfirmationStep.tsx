@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createReservation, ReservationConflictError } from "@/lib/booking-api";
+import { createReservation, ReservationConflictError, ReservationRateLimitError } from "@/lib/booking-api";
 import { formatDateSr, formatTimeSr } from "@/lib/date-format";
 import { BookingAction, BookingState } from "./bookingReducer";
 import { parseLocalDateString } from "./DateTimeStep";
@@ -58,6 +58,11 @@ export function ConfirmationStep({ slug, state, dispatch }: Props) {
         } catch (err) {
             if (err instanceof ReservationConflictError) {
                 dispatch({ type: "SLOT_TAKEN" });
+                return;
+            }
+            if (err instanceof ReservationRateLimitError) {
+                setError("Previše pokušaja rezervacije. Pokušajte ponovo za nekoliko minuta.");
+                setSubmitting(false);
                 return;
             }
             setError("Greška pri slanju rezervacije. Pokušajte ponovo.");

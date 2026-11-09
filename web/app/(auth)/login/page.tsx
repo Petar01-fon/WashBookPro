@@ -38,7 +38,9 @@ function LoginForm() {
         setError(
           err.status === 401
             ? "Pogrešan email ili lozinka."
-            : `Greška: ${err.message}`,
+            : err.status === 429
+              ? "Previše pokušaja prijave. Pokušajte ponovo za nekoliko minuta."
+              : `Greška: ${err.message}`,
         );
       } else {
         setError("Nije moguće povezati se sa serverom.");

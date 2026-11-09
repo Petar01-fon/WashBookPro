@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using WashBookPro.Api.Common.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
+using WashBookPro.Api.Common.Extensions;
 using WashBookPro.Api.Modules.Tenants.Entities;
 using WashBookPro.Api.Common.Email;
 using WashBookPro.Api.Modules.Reservations.Entities;
@@ -281,6 +283,7 @@ public partial class ReservationsController : ControllerBase
     // POST /reservations — public, guest/customer booking
     [HttpPost]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.PublicReservationsPolicy)]
     public async Task<IActionResult> Create([FromBody] CreateReservationRequest request)
     {
         var tenant = await ResolveTenantAsync(request.TenantSlug);

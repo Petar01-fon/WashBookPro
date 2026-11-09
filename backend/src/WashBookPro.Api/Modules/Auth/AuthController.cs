@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using WashBookPro.Api.Common.Extensions;
 using WashBookPro.Api.Modules.Auth.Dtos;
 using WashBookPro.Api.Modules.Auth.Services;
 
@@ -9,6 +11,7 @@ namespace WashBookPro.Api.Modules.Auth;
 public class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitingExtensions.LoginPolicy)]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         try

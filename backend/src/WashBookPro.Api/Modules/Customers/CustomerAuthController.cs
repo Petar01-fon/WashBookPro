@@ -5,8 +5,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using WashBookPro.Api.Common.Extensions;
 using WashBookPro.Api.Common.Persistence;
 using WashBookPro.Api.Modules.Customers.Dtos;
 using WashBookPro.Api.Modules.Customers.Entities;
@@ -22,6 +24,7 @@ public class CustomerAuthController(
 {
     // POST /auth/customer/register
     [HttpPost("register")]
+    [EnableRateLimiting(RateLimitingExtensions.LoginPolicy)]
     public async Task<IActionResult> Register(CustomerRegisterRequest request)
     {
         var exists = await db.CustomerAccounts.AnyAsync(c => c.Email == request.Email);
@@ -52,6 +55,7 @@ public class CustomerAuthController(
 
     // POST /auth/customer/login
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitingExtensions.LoginPolicy)]
     public async Task<IActionResult> Login(CustomerLoginRequest request)
     {
         var customer = await db.CustomerAccounts.SingleOrDefaultAsync(c => c.Email == request.Email);

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using WashBookPro.Api.Common.Email;
+using WashBookPro.Api.Common.Extensions;
 using WashBookPro.Api.Common.Middleware;
 using WashBookPro.Api.Common.Persistence;
 using WashBookPro.Api.Modules.Auth.Services;
@@ -78,6 +79,8 @@ builder.Services.AddTransient<IEmailService, ResendEmailService>();
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddWashBookRateLimiting(builder.Configuration);
+
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddControllers();
@@ -109,6 +112,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("Default");
+// After CORS, so a 429 still carries CORS headers and the browser can read it.
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

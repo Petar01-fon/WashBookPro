@@ -33,6 +33,11 @@ public sealed class PostgresFixture : IAsyncLifetime
             builder.UseSetting("Google:ClientId", "test-client-id");
             builder.UseSetting("Google:ClientSecret", "test-client-secret");
             builder.UseSetting("Cors:AllowedOrigins:0", CorsTests.AllowedOrigin);
+            // All test requests share one rate-limit bucket (no remote IP), so the
+            // shared factory gets limits no test run can reach. RateLimitingTests
+            // builds its own factory with low limits.
+            builder.UseSetting("RateLimiting:Reservations:PermitLimit", "100000");
+            builder.UseSetting("RateLimiting:Login:PermitLimit", "100000");
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IEmailService>();

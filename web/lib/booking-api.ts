@@ -81,6 +81,16 @@ export class ReservationConflictError extends Error {
     }
 }
 
+// Thrown for 429: too many booking attempts from this IP address in the current
+// window (backend RateLimiting:Reservations). Nothing to fix in the form; the
+// customer has to wait.
+export class ReservationRateLimitError extends Error {
+    constructor() {
+        super("Too many reservation attempts");
+        this.name = "ReservationRateLimitError";
+    }
+}
+
 export async function createReservation(payload: CreateReservationPayload): Promise<ReservationResult> {
     const res = await fetch(`${API_URL}/reservations`, {
         method: "POST",
@@ -89,6 +99,7 @@ export async function createReservation(payload: CreateReservationPayload): Prom
     });
 
     if (res.status === 409) throw new ReservationConflictError();
+    if (res.status === 429) throw new ReservationRateLimitError();
     if (!res.ok) throw new Error("Failed to create reservation");
     return res.json();
 }
