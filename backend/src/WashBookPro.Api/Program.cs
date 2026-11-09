@@ -78,7 +78,8 @@ builder.Services.AddTransient<IEmailService, ResendEmailService>();
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 

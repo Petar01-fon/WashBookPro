@@ -61,11 +61,12 @@ public class ServicesController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateServiceRequest req)
     {
         var tenantId = _tenantContext.TenantId;
+        if (tenantId is null) return Unauthorized();
 
         var service = new Service
         {
             Id = Guid.NewGuid(),
-            TenantId = (Guid)tenantId,
+            TenantId = tenantId.Value,
             Name = req.Name,
             VehicleCategory = req.VehicleCategory,
             ServiceType = req.ServiceType,
