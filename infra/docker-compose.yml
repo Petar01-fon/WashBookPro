@@ -76,6 +76,7 @@ services:
       RESEND__FROMEMAIL: ${RESEND_FROM_EMAIL}
       Google__ClientId: ${GOOGLE_CLIENT_ID}
       Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
+      Seq__ServerUrl: http://seq:5341
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     networks:
@@ -101,9 +102,27 @@ services:
     depends_on:
       - backend
 
+  # Structured logs for local development (Gate 4, Sprint A1). UI on
+  # http://localhost:5380, bound to localhost only and without login, because it
+  # is a dev tool. Production Seq is decided in Sprint A4.
+  seq:
+    image: datalust/seq:2026.1
+    container_name: washbook-seq
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
+    ports:
+      - "127.0.0.1:${SEQ_PORT:-5380}:80"
+    volumes:
+      - seq_data:/data
+    networks:
+      - washbook-net
+
 volumes:
   postgres_data:
   pgadmin_data:
+  seq_data:
 
 networks:
   washbook-net:

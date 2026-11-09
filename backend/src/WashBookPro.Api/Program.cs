@@ -10,8 +10,26 @@ using WashBookPro.Api.Common.Persistence;
 using WashBookPro.Api.Modules.Auth.Services;
 using Microsoft.AspNetCore.Authentication.Google;
 using WashBookPro.Api.Modules.Tenants;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Structured logs (Serilog). Levels come from the "Serilog" config section.
+// Console always; Seq only when Seq:ServerUrl is set (dev compose sets it),
+// so without Seq the app logs exactly as before, just to the console.
+builder.Services.AddSerilog((services, logger) =>
+{
+    logger.ReadFrom.Configuration(builder.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(outputTemplate:
+            "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {TenantId} {UserId} {RequestId}{NewLine}{Exception}");
+
+    var seqUrl = builder.Configuration["Seq:ServerUrl"];
+    if (!string.IsNullOrWhiteSpace(seqUrl))
+        logger.WriteTo.Seq(seqUrl);
+});
 
 // Allowed browser origins come from configuration (Cors:AllowedOrigins), never
 // from code: localhost:3000 in appsettings.Development.json, the real web
@@ -110,11 +128,26 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+// First in the pipeline, so every response is logged once, including 429s and
+// short-circuited CORS preflights. Health probes (uptime monitor) stay out of
+// the logs unless they fail.
+app.UseSerilogRequestLogging(options =>
+{
+    options.GetLevel = (httpContext, _, exception) =>
+        exception is not null || httpContext.Response.StatusCode >= 500
+            ? LogEventLevel.Error
+            : httpContext.Request.Path.StartsWithSegments("/health")
+                ? LogEventLevel.Verbose
+                : LogEventLevel.Information;
+});
+
 app.UseHttpsRedirection();
 app.UseCors("Default");
 // After CORS, so a 429 still carries CORS headers and the browser can read it.
 app.UseRateLimiter();
 app.UseAuthentication();
+// After authentication, so TenantId/UserId from the JWT reach the logs.
+app.UseMiddleware<LogEnrichmentMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");

@@ -64,7 +64,8 @@ public class ResendEmailService : IEmailService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send booking confirmation email to {Email}", email.ToEmail);
+            // No recipient address in the log: logs are kept (Seq), addresses are personal data.
+            _logger.LogError(ex, "Failed to send booking confirmation email");
             return false;
         }
     }
