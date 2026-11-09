@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getDashboardReservations, ReservationItem } from "@/lib/dashboard-api";
-import { belgradeDateString } from "@/lib/date-format";
+import { belgradeDateString, formatDateSr, shiftBelgradeDate } from "@/lib/date-format";
 import { ReservationTable } from "./ReservationTable";
 import { ReservationCalendar } from "./ReservationCalendar";
 
@@ -20,11 +20,11 @@ export function ReservationsView() {
   }, [date]);
 
   function prevDay() {
-    setDate((d) => new Date(d.getTime() - 86400000));
+    setDate((d) => shiftBelgradeDate(d, -1));
   }
 
   function nextDay() {
-    setDate((d) => new Date(d.getTime() + 86400000));
+    setDate((d) => shiftBelgradeDate(d, 1));
   }
 
   function today() {
@@ -75,13 +75,7 @@ export function ReservationsView() {
           Danas
         </button>
         <span className="text-sm font-medium text-gray-700">
-          {date.toLocaleDateString("sr-Latn-RS", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-            timeZone: "Europe/Belgrade",
-          })}
+          {formatDateSr(date, { weekday: true, timeZone: "Europe/Belgrade" })}
         </span>
         <button
           onClick={nextDay}

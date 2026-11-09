@@ -31,6 +31,16 @@ export function belgradeDateString(instant: Date): string {
     return instant.toLocaleDateString("en-CA", { timeZone: BELGRADE_TZ });
 }
 
+// The Belgrade calendar day `days` away from the one containing `instant`, as noon
+// UTC of that day. Calendar arithmetic, not `± days * 86400000`: across a DST switch
+// a fixed 24h step from a late-evening or just-after-midnight instant skips or
+// repeats a day. Noon UTC is always inside the same Belgrade day (UTC+1/+2), so the
+// result is safe for belgradeDateString and for formatting with the Belgrade zone.
+export function shiftBelgradeDate(instant: Date, days: number): Date {
+    const [y, m, d] = belgradeDateString(instant).split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d + days, 12));
+}
+
 // Belgrade wall-clock "HH:mm" (24h) of `instant`.
 export function belgradeTimeString(instant: Date): string {
     return instant.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: BELGRADE_TZ });

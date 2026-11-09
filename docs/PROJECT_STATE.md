@@ -39,7 +39,7 @@ Provereno čitanjem koda 2026-11-09 (bez živog testa).
 |---|---|
 | Eksplicitna provera `TenantId` u `UpdateStatus` i `CancelReservation` | ✅ Urađeno (`3924047`) |
 | UTC normalizacija ulaznih `DateTime` vrednosti | ✅ Urađeno za `startsAt` (`04bf85c`): vrednost bez zone → 400. Ostali ulazi su `DateOnly` |
-| `timeZone: 'Europe/Belgrade'` pri formatiranju | 🟡 Uglavnom urađeno (`fe93b3e`). Ostaje: `ReservationsView.tsx:78` i `StatsView.tsx:55` bez `timeZone`; `StatsView.tsx:38` `new Date(e.target.value)` čita datum kao UTC ponoć |
+| `timeZone: 'Europe/Belgrade'` pri formatiranju | ✅ Urađeno. Formatiranje je ispravno od `fe93b3e` (provereno 2026-11-09 u 4 zone). Popravljen pomak dana `±86400000` u `ReservationsView` oko prelaska na letnje/zimsko vreme (Gate 3) |
 | `WalkInDialog.tsx` nezavisan od zone browsera | ✅ Urađeno (`fe93b3e`) |
 | `[Authorize(Roles = ...)]` na staff endpointima | ✅ Urađeno (`3924047`) |
 | Ponovna upotreba `Customer` po telefonu unutar tenanta | ✅ Postoji (`ReservationsController.cs`, pretraga po `Phone` + `TenantId`) |
