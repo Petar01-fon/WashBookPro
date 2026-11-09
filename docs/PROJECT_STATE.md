@@ -3,7 +3,8 @@
 **Poslednje ažuriranje:** 2026-11-09
 **Aktivan developer:** Solo (Petar Bogdanović)
 **Trenutna faza:** Faza A, Sprint A1 (10. – 22. nov 2026): kritične popravke i
-praćenje grešaka. Plan za ostatak A1 čeka Petrov nalog.
+praćenje grešaka. Gate 1–4 završeni; **sledeći je Gate 5 (Sentry)**, vidi
+sekciju "Sprint A1 — plan po gate-ovima".
 
 > **Jedini važeći plan je `docs/plan/WashBook-Plan-razvoja.md`** (ADR-029).
 > Ovaj dokument prati samo trenutno stanje, otvorene nalaze i sledeći korak.
@@ -20,9 +21,14 @@ profil, landing stranica i HTML email potvrde (Resend).
 
 - **Dev tenant:** slug `dev-wash`, ID `80b059d6-c10f-47a6-8296-797009d5aa3d`
 - **Testovi:** `backend/tests/WashBookPro.Api.Tests` (xUnit v3 + Testcontainers,
-  ADR-027), 44 test metode: availability 12, kreiranje i walk-in 21,
-  tenant bootstrap 6, CORS 3, smoke 2. CI ih pokreće na svaki push na `main`.
-  Frontend testovi ne postoje.
+  ADR-027), 50 testova: availability 12, kreiranje i walk-in 21,
+  tenant bootstrap 6, rate limit 5, CORS 3, smoke 3. CI ih pokreće na svaki
+  push na `main`. Frontend testovi ne postoje.
+- **Logovi (dev):** Serilog → konzola + Seq (`http://localhost:5380`, bez lozinke,
+  samo localhost). Svaki log nosi `RequestId`, a za prijavljene i `TenantId`/`UserId`.
+- **Rate limit:** `POST /reservations` 6 / 15 min po IP; login i registracija
+  10 / 15 min po IP; prekoračenje → 429. Vrednosti u `appsettings.json`
+  (sekcija `RateLimiting`).
 - **Produkcija (kod postoji, server ne):** `infra/docker-compose.prod.yml` sa
   Caddy-jem, migration bundle, komanda `bootstrap-tenant`, uputstvo u
   `infra/README.md`. Nema servera ni DNS-a. Domen: `washbook.tech` (`app.` za
@@ -33,8 +39,6 @@ profil, landing stranica i HTML email potvrde (Resend).
 
 ## Sprint A1 — stanje stavki
 
-Provereno čitanjem koda 2026-11-09 (bez živog testa).
-
 | Stavka iz plana | Stanje |
 |---|---|
 | Eksplicitna provera `TenantId` u `UpdateStatus` i `CancelReservation` | ✅ Urađeno (`3924047`) |
@@ -43,18 +47,48 @@ Provereno čitanjem koda 2026-11-09 (bez živog testa).
 | `WalkInDialog.tsx` nezavisan od zone browsera | ✅ Urađeno (`fe93b3e`) |
 | `[Authorize(Roles = ...)]` na staff endpointima | ✅ Urađeno (`3924047`) |
 | Ponovna upotreba `Customer` po telefonu unutar tenanta | ✅ Postoji (`ReservationsController.cs`, pretraga po `Phone` + `TenantId`) |
-| Rate limit na javnom `POST /reservations` | ❌ Nije urađeno |
-| Sentry na backendu i u Next.js-u | ❌ Nije urađeno. Novi spoljni servis, traži odobrenje |
-| Serilog (`TenantId`, `UserId`, `RequestId`) + Seq u `docker compose` | ❌ Nije urađeno. Nova zavisnost i kontejner, traže odobrenje |
-| Health check endpoint | 🟡 `/health` postoji, ali ne proverava bazu |
+| Rate limit na javnom `POST /reservations` | ✅ Urađeno (`3b8b4de`), plus login i registracija |
+| Sentry na backendu i u Next.js-u | ⏳ Gate 5, sledeći |
+| Serilog (`TenantId`, `UserId`, `RequestId`) + Seq u `docker compose` | ✅ Urađeno (`ad69d6e`), Seq samo u dev-u; prod Seq u A4 |
+| Health check endpoint | ✅ `/health` proverava bazu, 503 kad baza ne radi (`46cb035`) |
 | ADR „Strateški fokus: alat za perionice" | ✅ ADR-029 (`d136dcd`) |
+| NU1903 (`Microsoft.OpenApi` 2.0.0) | ✅ `Microsoft.AspNetCore.OpenApi` 10.0.14 → `Microsoft.OpenApi` 2.12.2 (`46cb035`) |
+| CS8629 (`ServicesController.Create`) | ✅ 401 bez tenanta u tokenu (`46cb035`) |
 
-Kandidati za A1 iz starih nalaza (stvarni bagovi ili bezbednost):
-- **NU1903:** `Microsoft.OpenApi` 2.0.0 (GHSA-v5pm-xwqc-g5wc, visoka ozbiljnost),
-  ispravljeno u 2.7.5. Ulazi preko `Microsoft.AspNetCore.OpenApi` 10.0.5;
-  `AddOpenApi()` je u `Program.cs` bez uslova. Promena verzije traži odobrenje.
-- **CS8629:** `ServicesController.cs:68`, `(Guid)tenantId` bez provere; bez
-  `tenant_id` u tokenu baca `InvalidOperationException`.
+## Sprint A1 — plan po gate-ovima
+
+Odobren 2026-11-09. Posle svakog gate-a: pun sadržaj fajlova, provere, Petrovo
+odobrenje, commit.
+
+| Gate | Sadržaj | Stanje |
+|---|---|---|
+| 1 | NU1903, CS8629, `/health` sa proverom baze | ✅ `46cb035` |
+| 2 | Rate limit (rezervacije 6/15 min, login 10/15 min po IP) + poruke za 429 u web-u | ✅ `3b8b4de` |
+| 3 | Datumi u web-u: pomak dana preko DST-a u `ReservationsView` | ✅ `9d642a5` |
+| 4 | Serilog + Seq (dev), bez emaila u logovima | ✅ `ad69d6e` |
+| 5 | Sentry (backend + web), ADR-030 „Praćenje grešaka i logovi", Sentry u `CLAUDE.md` External Services | ⏳ sledeći |
+
+**Gate 5 — odluke koje su već donete (2026-11-09):**
+- Sentry nalog: org slug `washbook`, **EU region**, besplatni plan.
+- Dva projekta: backend (ASP.NET Core) i web (Next.js). DSN-ovi u `infra/.env`
+  (`SENTRY_DSN_BACKEND`, `SENTRY_DSN_WEB`), nikad u repo ni u chat.
+- Paketi: `Sentry.AspNetCore` + `Sentry.Serilog` (backend), `@sentry/nextjs` (web).
+  Pre pisanja koda proveriti podršku za Next.js 16 u aktuelnoj dokumentaciji.
+- Bez DSN-a SDK ne radi ništa (dev radi i bez naloga). `SendDefaultPii = false`.
+- **Bez source maps za sada** (traže tajni token pri build-u); uvesti kad zatreba.
+- Provera: namerna test greška na backendu i u web-u mora da stigne u Sentry,
+  plus `dotnet test`, `pnpm exec tsc --noEmit`, `pnpm build`.
+- Sentry plugin za Claude Code (`npx @sentry/agent-plugin install washbook#a177d6dbb6`)
+  Petar instalira sam, samo za Claude Code. Plugin pomaže oko projekata i DSN-ova,
+  ali Gate 5 i dalje ide po radnom modelu iz `CLAUDE.md` (plan → odobrenje → kod).
+
+Napomene iz Gate 1–4 za kasnije:
+- U produkciji (A4) spustiti `Microsoft.EntityFrameworkCore.Database.Command` na
+  Warning: svaki `/health` poziv inače loguje `SELECT 1`.
+- `ResendEmailService.cs:60` loguje telo Resend greške, koje može sadržati adresu primaoca.
+- Lint greške koje postoje od ranije: `<a href="/">` u `app/(auth)/login/page.tsx`,
+  `setState` u `useEffect` u `ReservationsView.tsx` (isti obrazac kao nalaz B).
+- `pnpm exec` iz Git Bash-a ne radi u ovom okruženju; koristiti PowerShell.
 
 ---
 
