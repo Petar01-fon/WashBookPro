@@ -8,17 +8,23 @@ Never deviate from the decisions recorded here without Petar's explicit approval
 
 ## Project Overview
 
-WashBookPro is a multi-tenant SaaS platform for car wash businesses in Serbia,
-serving three user groups:
+WashBookPro is a multi-tenant SaaS platform for car wash businesses in Serbia.
 
-1. **End consumers (B2C)** — book washes via web or mobile, pay cash or online
-2. **Business clients (B2B)** — fleet companies: group bookings, fleet management, monthly invoicing (eFaktura)
-3. **Car wash owners (SaaS tenants)** — run their own washes on the platform, pay a monthly subscription
+**Strategic focus through 2027 (ADR-029):** a tool for car wash owners —
+wash records, workers, bookings and control over cash. The owner pays a
+monthly subscription per location. Drivers book through each wash's own
+public page (`/book/[slug]`), not through a marketplace.
 
-Core capabilities: bookings, subscriptions, ANPR-based anti-theft monitoring,
-payments, customer notifications, B2B invoicing.
-ANPR (matching entering vehicles to reservations to prevent employee theft) is
-the primary product differentiator, not a convenience feature.
+Long-term the platform may also serve drivers (B2C marketplace) and fleet
+companies (B2B, eFaktura). Both are DEFERRED until their triggers in the
+development plan are met.
+
+ANPR (matching entering vehicles to recorded washes to prevent employee
+theft) is the primary product differentiator, not a convenience feature.
+
+**Single source of truth for planning:** `docs/plan/WashBook-Plan-razvoja.md`
+(with `docs/plan/WashBook-Plan-testiranja.md`). If any other document
+disagrees with it, the plan wins.
 
 ---
 
@@ -45,7 +51,7 @@ against current docs (Context7 if available) instead of relying on memory.
 | -------------- | --------------------- | ---------------------------------------- |
 | SMS / Viber    | Infobip               | NOT Twilio. Deferred.                    |
 | Payments       | AllSecure or Monri    | NOT Stripe. Deferred.                    |
-| ANPR           | PlateRecognizer       | Phase 2                                  |
+| ANPR           | PlateRecognizer       | Phase B2 (passive), C (integration)      |
 | Email          | Resend                | Transactional email                      |
 | Object storage | MinIO (S3-compatible) |                                          |
 
@@ -174,8 +180,12 @@ These exist because earlier agent sessions failed in exactly these ways.
 ## Session Continuity
 
 - `CLAUDE.md` = stable rules (this file). Change it only with approval.
+- `docs/plan/WashBook-Plan-razvoja.md` = the only valid development plan
+  (phases, sprints, scope, gates). Changes only with Petar's decision.
 - `docs/PROJECT_STATE.md` = current state and next steps. Read it at session start;
   propose an update at the end of every completed gate.
+- `docs/ideje.md` = parking lot for new ideas. A new idea goes there, not
+  into code or into the plan; the list is reviewed once a month.
 - `/docs/decisions/ADR-NNN-title.md` = significant decisions, written in
   Serbian (Latin script).
 
@@ -198,12 +208,26 @@ All secrets live in `.env.local` (gitignored).
 
 ---
 
-## Roadmap Phases (high level)
+## Roadmap Phases (revised Nov 2026)
 
-| Phase | Period     | Description                                                              | Status      |
-| ----- | ---------- | ------------------------------------------------------------------------ | ----------- |
-| 0.1–0.8 | Week 1-12 | Repo, dev env, backend scaffold, EF Core + multi-tenancy, JWT, web, mobile, Docker/CI | ✓ Done |
-| 1     | Month 3-5  | MVP for owner's wash: reservations, worker terminal, owner dashboard     | In progress |
-| 2     | Month 6-8  | ANPR anti-theft, B2B portal, notifications, mobile full-featured         |             |
-| 3     | Month 9-11 | SaaS readiness: self-service onboarding, online payments, eFaktura, subscription billing |  |
-| 4     | Month 12+  | Growth, optimization, advanced features                                  |             |
+Strategic focus for 2027: WashBook is a tool for car wash owners
+(bookings, worker terminal, owner control over cash). Each wash has a
+public booking page (`/book/[slug]`). Driver marketplace, B2B/eFaktura,
+online payments, self-service onboarding and the mobile app are DEFERRED.
+Do not build deferred features without explicit approval.
+
+| Phase | Period              | Description                                                        |
+| ----- | ------------------- | ------------------------------------------------------------------ |
+| 0.x   | done                | Foundation (repo, backend, auth, web, mobile skeleton, Docker) ✓   |
+| A     | Nov 10 – Dec 31 '26 | Pilot-ready: critical fixes, worker terminal (PIN), owner daily    |
+|       |                     | report vs cash, audit log, Sentry/Serilog/Seq, prod + backups      |
+| B0    | Jan 4 – 15 '27      | Dry run (simulated work day)                                       |
+| B1    | Jan 18 – Feb 7 '27  | Pilot at one location, app only                                    |
+| B2    | Feb 8 – Mar 14 '27  | Pilot + passive ANPR camera (logging only, no UI)                  |
+| C     | Mar 15 – Apr 30 '27 | ANPR integration: plate-to-wash matching, owner alerts             |
+| D     | May – Aug '27       | First customers: 5 active washes, 2–3 paying                       |
+| E     | Sep '27+            | Growth; deferred features return only when their trigger is met    |
+
+See `docs/plan/WashBook-Plan-razvoja.md` and `docs/plan/WashBook-Plan-testiranja.md`.
+
+Production domain: `washbook.tech` (`app.` for web, `api.` for API).
