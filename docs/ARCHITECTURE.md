@@ -22,7 +22,7 @@ Ovaj pristup je odabran umesto mikroservisa jer:
 |---------------|--------------------------|---------------------------------------------------|
 | Backend API   | ASP.NET Core 10 (C#)     | REST API, poslovna logika, autentikacija          |
 | Web aplikacija| Next.js 16, React 19     | Vlasnički dashboard, terminal, web rezervacije    |
-| Mobilna app   | React Native + Expo      | Skeleton; rad odložen (ADR-026)                   |
+| Mobilna app   | React Native + Expo      | Skeleton; rad odložen (ADR-029)                   |
 | ANPR edge     | Python (PlateRecognizer) | Prepoznavanje tablica na ulazu/izlazu             |
 | Baza          | PostgreSQL 16            | Deljena baza za sve tenante                       |
 | Infrastruktura| Docker Compose           | Lokalni razvoj i produkcioni deployment           |
@@ -47,6 +47,7 @@ kasnije faze).
 
 ## Napomena
 
-Odluke su u `docs/decisions/` (ADR-001 do ADR-026), a trenutno stanje i
-sledeći koraci u `docs/PROJECT_STATE.md`. Dijagrami (sekvencijalni, ER) još
+Plan razvoja je u `docs/plan/WashBook-Plan-razvoja.md` (jedini važeći plan,
+ADR-029). Odluke su u `docs/decisions/` (ADR-001 do ADR-029), a trenutno
+stanje i sledeći koraci u `docs/PROJECT_STATE.md`. Dijagrami (sekvencijalni, ER) još
 ne postoje.

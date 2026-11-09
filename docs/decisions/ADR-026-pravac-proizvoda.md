@@ -1,8 +1,11 @@
 # ADR-026 — Pravac proizvoda do sezone 2027
 
-**Status:** Prihvaćeno
+**Status:** Zamenjeno ADR-029
 **Datum:** 2026-10-06
 **Autor:** Petar Bogdanović
+
+> **Zamenjeno 2026-11-09.** Ova odluka više ne važi. Važeći pravac je u
+> ADR-029 i `docs/plan/WashBook-Plan-razvoja.md`. Tekst ispod je istorija.
 
 ## Kontekst
 
