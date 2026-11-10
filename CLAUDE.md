@@ -54,6 +54,7 @@ against current docs (Context7 if available) instead of relying on memory.
 | ANPR           | PlateRecognizer       | Phase B2 (passive), C (integration)      |
 | Email          | Resend                | Transactional email                      |
 | Object storage | MinIO (S3-compatible) |                                          |
+| Error tracking | Sentry                | EU region, org `washbook`; errors only, no PII (ADR-030) |
 
 ---
 

@@ -29,6 +29,27 @@ builder.Services.AddSerilog((services, logger) =>
     var seqUrl = builder.Configuration["Seq:ServerUrl"];
     if (!string.IsNullOrWhiteSpace(seqUrl))
         logger.WriteTo.Seq(seqUrl);
+
+    // Error and higher become Sentry events; Information and higher ride along
+    // as breadcrumbs. The SDK itself is initialized by UseSentry below.
+    logger.WriteTo.Sentry(o =>
+    {
+        o.InitializeSdk = false;
+        o.MinimumEventLevel = LogEventLevel.Error;
+        o.MinimumBreadcrumbLevel = LogEventLevel.Information;
+    });
+});
+
+// Error tracking (ADR-030). DSN from Sentry:Dsn (compose: Sentry__Dsn).
+// The SDK throws at startup on a null DSN and is disabled only by an empty
+// one, so a missing value becomes "": dev and tests run without Sentry.
+// No personal data: no user from the JWT, no request bodies (booking requests
+// carry name, phone and email).
+builder.WebHost.UseSentry(options =>
+{
+    options.Dsn ??= string.Empty;
+    options.SendDefaultPii = false;
+    options.MaxRequestBodySize = Sentry.Extensibility.RequestSize.None;
 });
 
 // Allowed browser origins come from configuration (Cors:AllowedOrigins), never

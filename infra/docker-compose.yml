@@ -77,6 +77,8 @@ services:
       Google__ClientId: ${GOOGLE_CLIENT_ID}
       Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
       Seq__ServerUrl: http://seq:5341
+      # Empty = Sentry disabled (ADR-030).
+      Sentry__Dsn: ${SENTRY_DSN_BACKEND:-}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     networks:
@@ -91,6 +93,9 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        # Baked into the client bundle at build time; empty = Sentry disabled.
+        NEXT_PUBLIC_SENTRY_DSN: ${SENTRY_DSN_WEB:-}
+        NEXT_PUBLIC_SENTRY_ENVIRONMENT: development
     container_name: washbook-web
     restart: unless-stopped
     environment:

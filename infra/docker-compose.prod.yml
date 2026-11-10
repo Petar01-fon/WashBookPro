@@ -54,6 +54,7 @@ services:
       Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
       Frontend__BaseUrl: https://${WEB_DOMAIN}
       Cors__AllowedOrigins__0: https://${WEB_DOMAIN}
+      Sentry__Dsn: ${SENTRY_DSN_BACKEND:-}
     networks:
       - internal
     depends_on:
@@ -66,6 +67,8 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: https://${API_DOMAIN}
+        NEXT_PUBLIC_SENTRY_DSN: ${SENTRY_DSN_WEB:-}
+        NEXT_PUBLIC_SENTRY_ENVIRONMENT: production
     restart: unless-stopped
     environment:
       INTERNAL_API_URL: http://backend:8080

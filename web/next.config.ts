@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -12,4 +13,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry (ADR-030). No source map upload for now: it needs a secret auth token
+// at build time. Stack traces from the browser stay minified until then.
+export default withSentryConfig(nextConfig, {
+  sourcemaps: { disable: true },
+  telemetry: false,
+  silent: !process.env.CI,
+});
