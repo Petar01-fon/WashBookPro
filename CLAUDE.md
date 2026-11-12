@@ -232,3 +232,107 @@ Do not build deferred features without explicit approval.
 See `docs/plan/WashBook-Plan-razvoja.md` and `docs/plan/WashBook-Plan-testiranja.md`.
 
 Production domain: `washbook.tech` (`app.` for web, `api.` for API).
+
+---
+
+## Orchestration (multi-agent workflow)
+
+These rules apply only when Petar explicitly starts a sprint or the pilot. Otherwise
+work as a normal session under the Working Model rules.
+
+Approved by Petar on 2026-11-12. The main session is the **orchestrator**; the
+subagents in `.claude/agents/` do the work. Subagents read this file too: for them only
+"Hard stops" and "Never" apply, plus their own agent file.
+
+### Sources of truth
+
+- The only plan is `docs/plan/WashBook-Plan-razvoja.md` (with the testing plan).
+  There is no PLAN.md and no STATUS.md.
+- Sprint gates and status are kept in `docs/PROJECT_STATE.md` (the "Sprint Xn — plan po
+  gate-ovima" table). Every gate needs a concrete verification command. If one is
+  missing, propose it, and write it into `PROJECT_STATE.md` only after Petar approves.
+
+### Phase = sprint
+
+- A phase is one sprint (A1, A2, …). A sprint starts only when Petar says so. At sprint
+  start the orchestrator presents the gate list (tasks, assigned agent, gate command)
+  and waits for approval (Working Model rule 1).
+- Inside an approved sprint, this section replaces Working Model rules 2 and 3. The
+  orchestrator works gate by gate on its own and does not stop after each gate. It
+  stops at the end of the sprint or on a hard stop.
+
+### Branch and commits
+
+- Work on the branch `sprint/<id>` (e.g. `sprint/A1`), created from `main`. Never on `main`.
+- After a gate passes, the orchestrator makes exactly one commit, with the message
+  `Gate <N>: <short description>` and no AI attribution.
+- Subagents never commit. `git push` is forbidden.
+
+### Delegation
+
+- The orchestrator does not write production or test code. It delegates:
+  `backend-dev` (`backend/`), `frontend-dev` (`web/`), `tester` (`backend/tests/`),
+  and `reviewer` (read-only).
+- The orchestrator edits only `docs/PROJECT_STATE.md`.
+- Subagents start cold. Each brief is self-contained: goal, gate id, files or areas,
+  acceptance criteria, gate command, and constraints from this file.
+- Do not run two agents that build the backend (`backend-dev`, `tester`) at the same
+  time. `backend-dev` and `frontend-dev` may run in parallel when the task allows it.
+- `mobile/` and `anpr-edge/` are off limits to every agent until Petar says otherwise.
+
+### Token economy
+
+- The orchestrator does not read whole files. It relies on subagent reports,
+  `git diff --stat` and the gate result files. It reads a targeted line range only to
+  settle a reviewer finding or two conflicting reports.
+- Subagents report briefly: changed files, what changed (one line each), and the result
+  of the build/test commands (exit code, counts). No code dumps.
+- Models: the orchestrator runs on opus, `reviewer` on opus, `backend-dev`,
+  `frontend-dev` and `tester` on sonnet (set in each agent file).
+
+### Gate loop
+
+1. Delegate the task to the right agent.
+2. When the agent stops, the SubagentStop hook (`.claude/hooks/subagent-gate.ps1`) runs
+   the gate: `dotnet build` + `dotnet test` for backend changes, `pnpm exec tsc --noEmit`
+   for web changes. On failure it sends the agent back, up to 3 attempts. Read the result
+   in `.claude/state/gate-<agent>.txt`.
+3. Run the gate's own verification command from `PROJECT_STATE.md` if it adds anything
+   beyond the hook (e.g. a real HTTP request against `localhost:8080`).
+4. Call `reviewer` with the sprint, gate id, task and expected scope.
+5. On `PROBLEMI`, delegate the fixes to the same agent type, then review again.
+6. The gate passes only when the hook result is `PASS`, the gate command is green and
+   the reviewer returns `ODOBRENO`. Then commit (`Gate <N>: …`) and add a short status
+   to `PROJECT_STATE.md`: what was done, gate command results, what the reviewer flagged
+   and how it was resolved.
+
+### End of sprint
+
+Stop and report to Petar (in Serbian): gates with commit hashes, test counts, reviewer
+findings, open issues, and a proposed `PROJECT_STATE.md` update for the next step. Do
+not start the next sprint.
+
+### Hard stops (stop mid-sprint, describe the problem, wait for Petar)
+
+- A tenant isolation test fails, or any data leak between tenants is found.
+- A change is needed to the plan, an ADR, `CLAUDE.md` or the architecture.
+- A migration changes or deletes existing columns or data.
+- An existing test would have to be deleted, skipped or weakened.
+- The same problem is not solved after 3 attempts (hook result `FAIL-3X`, or the same
+  reviewer finding three times).
+- A new package is needed (`pnpm add`, `dotnet add package`).
+- The gate hook reports `ALERT` or `ENV` (e.g. Docker not running).
+
+### Never
+
+- Delete, skip or weaken tests (looser assertions, wider expected values, swallowed
+  exceptions, `Skip =`) to make a gate pass.
+- Work around a denied command or a hook in another form (`git -C . push`, `sh -c`,
+  scripts). Report it instead.
+- Read `.env` files or other secrets, touch the production server or prod compose,
+  or delete anything outside the repository.
+- Hide a symptom instead of fixing the root cause (see Verification Rules).
+
+### Language
+
+Agent files and code are in English. Reports to Petar are in Serbian.

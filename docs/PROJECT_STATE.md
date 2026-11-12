@@ -1,10 +1,10 @@
 # PROJECT_STATE.md — WashBookPro
 
-**Poslednje ažuriranje:** 2026-11-09
+**Poslednje ažuriranje:** 2026-11-12
 **Aktivan developer:** Solo (Petar Bogdanović)
 **Trenutna faza:** Faza A, Sprint A1 (10. – 22. nov 2026): kritične popravke i
-praćenje grešaka. Gate 1–4 završeni; **sledeći je Gate 5 (Sentry)**, vidi
-sekciju "Sprint A1 — plan po gate-ovima".
+praćenje grešaka. Gate 1–5 završeni (Gate 5 Sentry u `b105071`). Sledeće: probni
+rad multi-agent toka (test izolacije tenanta), pa odluke za A2.
 
 > **Jedini važeći plan je `docs/plan/WashBook-Plan-razvoja.md`** (ADR-029).
 > Ovaj dokument prati samo trenutno stanje, otvorene nalaze i sledeći korak.
@@ -48,7 +48,7 @@ profil, landing stranica i HTML email potvrde (Resend).
 | `[Authorize(Roles = ...)]` na staff endpointima | ✅ Urađeno (`3924047`) |
 | Ponovna upotreba `Customer` po telefonu unutar tenanta | ✅ Postoji (`ReservationsController.cs`, pretraga po `Phone` + `TenantId`) |
 | Rate limit na javnom `POST /reservations` | ✅ Urađeno (`3b8b4de`), plus login i registracija |
-| Sentry na backendu i u Next.js-u | ⏳ Gate 5, sledeći |
+| Sentry na backendu i u Next.js-u | ✅ Urađeno (`b105071`): `Sentry.AspNetCore` + `Sentry.Serilog`, `@sentry/nextjs`, ADR-030 |
 | Serilog (`TenantId`, `UserId`, `RequestId`) + Seq u `docker compose` | ✅ Urađeno (`ad69d6e`), Seq samo u dev-u; prod Seq u A4 |
 | Health check endpoint | ✅ `/health` proverava bazu, 503 kad baza ne radi (`46cb035`) |
 | ADR „Strateški fokus: alat za perionice" | ✅ ADR-029 (`d136dcd`) |
@@ -66,7 +66,10 @@ odobrenje, commit.
 | 2 | Rate limit (rezervacije 6/15 min, login 10/15 min po IP) + poruke za 429 u web-u | ✅ `3b8b4de` |
 | 3 | Datumi u web-u: pomak dana preko DST-a u `ReservationsView` | ✅ `9d642a5` |
 | 4 | Serilog + Seq (dev), bez emaila u logovima | ✅ `ad69d6e` |
-| 5 | Sentry (backend + web), ADR-030 „Praćenje grešaka i logovi", Sentry u `CLAUDE.md` External Services | ⏳ sledeći |
+| 5 | Sentry (backend + web), ADR-030 „Praćenje grešaka i logovi", Sentry u `CLAUDE.md` External Services | ✅ `b105071` |
+
+Napomena za Gate 5: u repou nije zabeleženo da je namerna test greška sa backenda i iz
+web-a stigla u Sentry (provera iz odluka ispod). Petar potvrđuje ili se ponavlja uz DSN-ove.
 
 **Gate 5 — odluke koje su već donete (2026-11-09):**
 - Sentry nalog: org slug `washbook`, **EU region**, besplatni plan.
@@ -89,6 +92,27 @@ Napomene iz Gate 1–4 za kasnije:
 - Lint greške koje postoje od ranije: `<a href="/">` u `app/(auth)/login/page.tsx`,
   `setState` u `useEffect` u `ReservationsView.tsx` (isti obrazac kao nalaz B).
 - `pnpm exec` iz Git Bash-a ne radi u ovom okruženju; koristiti PowerShell.
+
+---
+
+## Multi-agent rad (od 2026-11-12)
+
+Pravila su u `CLAUDE.md`, sekcija "Orchestration". Važe samo kad Petar izričito pokrene
+sprint ili pilot. Agenti: `backend-dev`, `frontend-dev`, `tester` (sonnet) i `reviewer`
+(opus), u `.claude/agents/`. Gate hook (`.claude/hooks/subagent-gate.ps1`) posle rada
+agenta pokreće `dotnet build` + `dotnet test` ili `pnpm exec tsc --noEmit`, a rezultat
+upisuje u `.claude/state/gate-<agent>.txt`.
+
+- **Prvi zadatak (probni rad):** test izolacije tenanta za `Customers` i `Reservations`:
+  čitanje, izmena i brisanje tuđeg zapisa po ID-ju, plus provera da `IgnoreQueryFilters()`
+  koriste samo javni endpointi preko sluga. Čeka Petrov znak za početak.
+
+## Predlozi zadataka za naredne sprintove
+
+- **Lint u web-u.** Popraviti postojeće lint greške (`<a href="/">` u
+  `app/(auth)/login/page.tsx`, `setState` u `useEffect` u `ReservationsView.tsx` i ostale
+  koje `pnpm lint` prijavi), pa dodati `pnpm lint` u gate hook i u CI. Do tada lint nije
+  deo gate-a jer bi uvek padao.
 
 ---
 

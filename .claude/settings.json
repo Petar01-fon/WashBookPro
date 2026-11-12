@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "opus",
+  "env": {
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Edit(/backend/**)",
+      "Edit(/web/**)",
+      "Edit(/docs/PROJECT_STATE.md)",
+
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet restore *)",
+      "Bash(dotnet ef migrations add *)",
+      "Bash(dotnet ef migrations list *)",
+      "PowerShell(dotnet build *)",
+      "PowerShell(dotnet test *)",
+      "PowerShell(dotnet restore *)",
+      "PowerShell(dotnet ef migrations add *)",
+      "PowerShell(dotnet ef migrations list *)",
+
+      "PowerShell(pnpm exec tsc *)",
+      "PowerShell(pnpm lint *)",
+      "PowerShell(pnpm build *)",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm build *)",
+
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git add *)",
+      "Bash(git branch)",
+      "Bash(git branch -a)",
+      "Bash(git branch --list *)",
+      "Bash(git branch --show-current)",
+      "Bash(git switch -c *)",
+      "Bash(git commit -m \"Gate *)",
+      "PowerShell(git status *)",
+      "PowerShell(git diff *)",
+      "PowerShell(git log *)",
+      "PowerShell(git show *)",
+      "PowerShell(git add *)",
+      "PowerShell(git branch)",
+      "PowerShell(git branch -a)",
+      "PowerShell(git branch --list *)",
+      "PowerShell(git branch --show-current)",
+      "PowerShell(git switch -c *)",
+      "PowerShell(git commit -m \"Gate *)",
+
+      "Bash(docker compose *)",
+      "Bash(docker info *)",
+      "PowerShell(docker compose *)",
+      "PowerShell(docker info *)",
+
+      "Bash(curl *http://localhost:8080/*)",
+      "Bash(curl *http://localhost:3000/*)"
+    ],
+    "ask": [
+      "Edit(/CLAUDE.md)",
+      "Edit(/docs/plan/**)",
+      "Edit(/docs/decisions/**)",
+      "Edit(/.claude/**)",
+      "Edit(/.github/**)",
+      "Edit(/infra/**)",
+      "Edit(/.gitignore)",
+
+      "Bash(dotnet add *)",
+      "Bash(dotnet package add *)",
+      "Bash(pnpm add *)",
+      "Bash(npm install *)",
+      "Bash(npm i *)",
+      "PowerShell(dotnet add *)",
+      "PowerShell(dotnet package add *)",
+      "PowerShell(pnpm add *)",
+      "PowerShell(npm install *)",
+      "PowerShell(npm i *)",
+
+      "Bash(dotnet ef database *)",
+      "Bash(dotnet ef migrations remove *)",
+      "PowerShell(dotnet ef database *)",
+      "PowerShell(dotnet ef migrations remove *)",
+
+      "Bash(git reset *)",
+      "Bash(git clean *)",
+      "Bash(git checkout *)",
+      "Bash(git restore *)",
+      "Bash(git stash *)",
+      "Bash(git rebase *)",
+      "Bash(git merge *)",
+      "PowerShell(git reset *)",
+      "PowerShell(git clean *)",
+      "PowerShell(git checkout *)",
+      "PowerShell(git restore *)",
+      "PowerShell(git stash *)",
+      "PowerShell(git rebase *)",
+      "PowerShell(git merge *)",
+
+      "Bash(git branch -d *)",
+      "Bash(git branch -D *)",
+      "Bash(git branch --delete *)",
+      "PowerShell(git branch -d *)",
+      "PowerShell(git branch -D *)",
+      "PowerShell(git branch --delete *)",
+
+      "Bash(docker compose down *)",
+      "PowerShell(docker compose down *)",
+
+      "Bash(docker exec *)",
+      "PowerShell(docker exec *)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.local)",
+      "Read(.env.*.local)",
+      "Edit(.env)",
+      "Edit(.env.local)",
+      "Edit(.env.*.local)",
+      "Read(~/.ssh/**)",
+
+      "Read(/mobile/**)",
+      "Edit(/mobile/**)",
+      "Read(/anpr-edge/**)",
+      "Edit(/anpr-edge/**)",
+
+      "Bash(git push *)",
+      "PowerShell(git push *)",
+
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(sftp *)",
+      "Bash(rsync *)",
+      "PowerShell(ssh *)",
+      "PowerShell(scp *)",
+      "PowerShell(sftp *)",
+
+      "Bash(docker compose -f docker-compose.prod.yml *)",
+      "Bash(docker compose -f infra/docker-compose.prod.yml *)",
+      "Bash(docker context *)",
+      "PowerShell(docker compose -f docker-compose.prod.yml *)",
+      "PowerShell(docker compose -f infra/docker-compose.prod.yml *)",
+      "PowerShell(docker context *)",
+
+      "Bash(dotnet user-secrets *)",
+      "PowerShell(dotnet user-secrets *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.ps1\"",
+            "timeout": 30,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "^(backend-dev|frontend-dev|tester)$",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent-gate.ps1\"",
+            "timeout": 900,
+            "statusMessage": "Gate: build + tests"
+          }
+        ]
+      }
+    ]
+  }
+}

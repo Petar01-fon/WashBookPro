@@ -90,4 +90,5 @@ infra/bootstrap.env
 *.cer
 
 # Claude Code local settings
-.claude/
+.claude/settings.local.json
+.claude/state/
