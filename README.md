@@ -103,7 +103,7 @@ U Development okruženju se pri startu automatski kreira probna perionica
 
 ## Autor
 
-Petar Bogdanović, FON (Upravljanje projektima i investicijama).
+Petar Bogdanović, FON (Informacioni sistemi i tehnologije).
 
 ## Licenca
 
